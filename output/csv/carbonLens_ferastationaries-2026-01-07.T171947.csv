@@ -1,0 +1,2 @@
+equipment,fuel_state,fuel_type,unit,activity,spend,currency,_id,company_id,site_id,user_id,manager_id,frequency,year,month,emission_factor,emission_factor_unit,calculated_emission,name,notes,source,approved,approved_by,created_at,updated_at
+Equipment,Liquid,Furnace Oil,kgCO2e/KWH,10032.0,,,6910711606dea9aec6db05f7,6908587c6cafa76c72e26c47,690859986cafa76c72e26dd8,690859ba6cafa76c72e26dde,,yearly,2025,,0.53078,kgCO2e/KWH,5324.78496,Sam Smith,,,true,John Smith,2025-11-09T10:46:46.300000,2025-11-09T10:50:23.541000

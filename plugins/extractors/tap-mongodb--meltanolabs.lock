@@ -1,0 +1,230 @@
+{
+  "plugin_type": "extractors",
+  "name": "tap-mongodb",
+  "namespace": "tap_mongodb",
+  "variant": "meltanolabs",
+  "label": "MongoDB",
+  "docs": "https://hub.meltano.com/extractors/tap-mongodb--meltanolabs",
+  "repo": "https://github.com/MeltanoLabs/tap-mongodb",
+  "pip_url": "git+https://github.com/MeltanoLabs/tap-mongodb.git",
+  "executable": "tap-mongodb",
+  "description": "General purpose, document-based, distributed database.",
+  "logo_url": "https://hub.meltano.com/assets/logos/extractors/mongodb.png",
+  "capabilities": [
+    "about",
+    "activate-version",
+    "batch",
+    "catalog",
+    "discover",
+    "schema-flattening",
+    "state",
+    "stream-maps",
+    "structured-logging"
+  ],
+  "settings_group_validation": [
+    [
+      "database",
+      "mongodb_connection_string"
+    ],
+    [
+      "database",
+      "documentdb_credential_json_string"
+    ],
+    [
+      "database",
+      "documentdb_credential_json_extra_options",
+      "documentdb_credential_json_string"
+    ]
+  ],
+  "settings": [
+    {
+      "name": "add_record_metadata",
+      "kind": "boolean",
+      "value": false,
+      "label": "Add Record Metadata",
+      "description": "When True, _sdc metadata fields will be added to records produced by this tap. If the tap is run in log-based\nreplication mode, if this setting is enabled, the `_sdc_extracted_at` and `_sdc_deleted_at` timestamps on records\nwill be set to the cluster time value from the database change stream event.\n"
+    },
+    {
+      "name": "allow_modify_change_streams",
+      "kind": "boolean",
+      "value": false,
+      "label": "Allow Modify Change Streams",
+      "description": "In AWS DocumentDB (unlike MongoDB), change streams must be enabled specifically (see\nhttps://docs.aws.amazon.com/documentdb/latest/developerguide/change_streams.html#change_streams-enabling\n). If attempting to open a change stream against a collection on which change streams have not been\nenabled, an OperationFailure error will be raised. If this property is set to True, when this error\nis seen, the tap will execute an admin command to enable change streams and then retry the read\noperation. Note: if this setting is enabled, the credential the tap is using must have the `modifyChangeStreams`\npermission. Second note: use of this setting, and of change streams in general, may incur additional costs in\nAWS DocumentDB.\n"
+    },
+    {
+      "name": "batch_config.encoding.compression",
+      "kind": "options",
+      "label": "Batch Compression Format",
+      "description": "Compression format to use for batch files.",
+      "options": [
+        {
+          "label": "GZIP",
+          "value": "gzip"
+        },
+        {
+          "label": "None",
+          "value": "none"
+        }
+      ]
+    },
+    {
+      "name": "batch_config.encoding.format",
+      "kind": "options",
+      "label": "Batch Encoding Format",
+      "description": "Format to use for batch files.",
+      "options": [
+        {
+          "label": "JSONL",
+          "value": "jsonl"
+        },
+        {
+          "label": "Parquet",
+          "value": "parquet"
+        }
+      ]
+    },
+    {
+      "name": "batch_config.storage.prefix",
+      "kind": "string",
+      "label": "Batch Storage Prefix",
+      "description": "Prefix to use when writing batch files."
+    },
+    {
+      "name": "batch_config.storage.root",
+      "kind": "string",
+      "label": "Batch Storage Root",
+      "description": "Root path to use when writing batch files."
+    },
+    {
+      "name": "database",
+      "kind": "string",
+      "label": "Database",
+      "description": "Database name from which records will be extracted."
+    },
+    {
+      "name": "datetime_conversion",
+      "kind": "options",
+      "value": "datetime",
+      "label": "Datetime Conversion",
+      "description": "Parameter passed to MongoClient 'datetime_conversion' parameter. See documentation at https://pymongo.readthedocs.io/en/stable/examples/datetimes.html#handling-out-of-range-datetimes for details. The default value is 'datetime', which will throw a bson. Errors. InvalidBson error if a document contains a date outside the range of datetime. MINYEAR (year 1) to datetime. MAXYEAR (9999). The allowed values correspond to the enumeration members here: https://github.com/mongodb/mongo-python-driver/blob/e23eb7691e6e2905a77fc39a114d000ddf057e47/bson/codec_options.py#L192-L224 (they will be uppercased by the tap).",
+      "options": [
+        {
+          "label": "Datetime Ms",
+          "value": "datetime_ms"
+        },
+        {
+          "label": "Datetime",
+          "value": "datetime"
+        },
+        {
+          "label": "Datetime Auto",
+          "value": "datetime_auto"
+        },
+        {
+          "label": "Datetime Clamp",
+          "value": "datetime_clamp"
+        }
+      ]
+    },
+    {
+      "name": "documentdb_credential_json_extra_options",
+      "kind": "string",
+      "label": "Documentdb Credential Json Extra Options",
+      "description": "String (serialized JSON object) containing string-string key-value pairs which will be added to the\nconnection string options when using documentdb_credential_json_string. For example, when set to\nthe string `{\\\"tls\\\":\\\"true\\\",\\\"tlsCAFile\\\":\\\"my-ca-bundle.pem\\\"}`, the options\n`tls=true&tlsCAFile=my-ca-bundle.pem` will be passed to the MongoClient.\n"
+    },
+    {
+      "name": "documentdb_credential_json_string",
+      "kind": "string",
+      "label": "Documentdb Credential Json String",
+      "description": "String (serialized JSON object) with keys 'username', 'password', 'engine', 'host', 'port',\n'dbClusterIdentifier' or 'dbName', 'ssl'. See example at\nhttps://docs.aws.amazon.com/secretsmanager/latest/userguide/reference_secret_json_structure.html#reference_secret_json_structure_docdb.\nThe password from this JSON object will be url-encoded by the tap before opening the database connection.\n(This config setting exists to support use of AWS SecretsManager to manage a MongoDB/DocumentDB credenial).\n"
+    },
+    {
+      "name": "faker_config.locale",
+      "kind": "array",
+      "label": "Faker Locale",
+      "description": "One or more LCID locale strings to produce localized output for: https://faker.readthedocs.io/en/master/#localization"
+    },
+    {
+      "name": "faker_config.seed",
+      "kind": "string",
+      "label": "Faker Seed",
+      "description": "Value to seed the Faker generator for deterministic output: https://faker.readthedocs.io/en/master/#seeding-the-generator"
+    },
+    {
+      "name": "filter_collections",
+      "kind": "array",
+      "value": [],
+      "label": "Filter Collections",
+      "description": "Collections to discover (default: all) - filtering is case-insensitive. Useful for improving catalog discovery performance."
+    },
+    {
+      "name": "flattening_enabled",
+      "kind": "boolean",
+      "label": "Enable Schema Flattening",
+      "description": "'True' to enable schema flattening and automatically expand nested properties."
+    },
+    {
+      "name": "flattening_max_depth",
+      "kind": "integer",
+      "label": "Max Flattening Depth",
+      "description": "The max depth to flatten schemas."
+    },
+    {
+      "name": "flattening_max_key_length",
+      "kind": "integer",
+      "label": "Max Key Length",
+      "description": "The maximum length of a flattened key."
+    },
+    {
+      "name": "mongodb_connection_string",
+      "kind": "string",
+      "label": "Mongodb Connection String",
+      "description": "MongoDB connection string. See\nhttps://www.mongodb.com/docs/manual/reference/connection-string/#connection-string-uri-format for specification.\nThe password included in this string should be url-encoded. The tap will not url-encode it.\n"
+    },
+    {
+      "name": "operation_types",
+      "kind": "array",
+      "value": [
+        "create",
+        "delete",
+        "insert",
+        "replace",
+        "update"
+      ],
+      "label": "Operation Types",
+      "description": "List of MongoDB change stream operation types to include in tap output. The default behavior is to\nlimit to document-level operation types. See full list of operation types at\nhttps://www.mongodb.com/docs/manual/reference/change-events/#operation-types. Note that the list\nof allowed_values for this property includes some values not available to all MongoDB versions.\n"
+    },
+    {
+      "name": "prefix",
+      "kind": "string",
+      "value": "",
+      "label": "Prefix",
+      "description": "An optional prefix which will be added to each stream name.\n"
+    },
+    {
+      "name": "start_date",
+      "kind": "date_iso8601",
+      "label": "Start Date",
+      "description": "Start date. This is used for incremental replication only. Log based replication does not support this setting - do not provide it unless using the incremental replication method. Defaults to epoch zero time 1970-01-01 if tap uses incremental replication method."
+    },
+    {
+      "name": "stream_map_config",
+      "kind": "object",
+      "label": "Stream Map Config",
+      "description": "Stream map config. See https://sdk.meltano.com/en/latest/stream_maps.html for documentation."
+    },
+    {
+      "name": "stream_maps",
+      "kind": "object",
+      "label": "Stream Maps",
+      "description": "Stream maps. See https://sdk.meltano.com/en/latest/stream_maps.html for documentation."
+    }
+  ],
+  "supported_python_versions": [
+    "3.10",
+    "3.11",
+    "3.12",
+    "3.13",
+    "3.14"
+  ]
+}

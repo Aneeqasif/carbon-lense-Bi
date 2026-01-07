@@ -1,0 +1,222 @@
+duckdb tap docs:
+Capabilities
+This plugin currently has no capabilities defined. If you know the capabilities required by this plugin, please contribute!
+
+Settings
+
+The target-duckdb settings that are known to Meltano are documented below. To quickly find the setting you're looking for, click on any setting name from the list:
+
+    add_metadata_columns
+    batch_size_rows
+    data_flattening_max_level
+    database
+    dbname
+    default_target_schema
+    delimiter
+    filepath
+    flush_all_streams
+    hard_delete
+    path
+    primary_key_required
+    quotechar
+    schema_mapping
+    temp_dir
+    token
+    validate_records
+
+You can also list these settings using
+
+meltano config
+
+with the list subcommand:
+
+meltano config target-duckdb list
+
+You can override these settings or specify additional ones in your meltano.yml by adding the settings key.
+
+Please consider adding any settings you have defined locally to this definition on MeltanoHub by making a pull request to the YAML file that defines the settings for this plugin.
+
+Add Metadata Columns (add_metadata_columns)
+
+    Environment variable: TARGET_DUCKDB_ADD_METADATA_COLUMNS
+    Default Value: false
+
+Metadata columns add extra row level information about data ingestions, (i.e. when was the row read in source, when was inserted or deleted in postgres etc.) Metadata columns are creating automatically by adding extra columns to the tables with a column prefix SDC. The column names are following the stitch naming conventions documented at https://www.stitchdata.com/docs/data-structure/integration-schemas#sdc-columns. Enabling metadata columns will flag the deleted rows by setting the _SDC_DELETED_AT metadata column. Without the add_metadata_columns option the deleted rows from singer taps will not be recognisable in DuckDB.
+
+Configure this setting directly using the following Meltano command:
+
+meltano config target-duckdb set add_metadata_columns [value]
+
+Batch Size Rows (batch_size_rows)
+
+    Environment variable: TARGET_DUCKDB_BATCH_SIZE_ROWS
+    Default Value: 100000
+
+Maximum number of rows in each batch. At the end of each batch, the rows in the batch are loaded into DuckDB.
+
+Configure this setting directly using the following Meltano command:
+
+meltano config target-duckdb set batch_size_rows [value]
+
+Data Flattening Max Level (data_flattening_max_level)
+
+    Environment variable: TARGET_DUCKDB_DATA_FLATTENING_MAX_LEVEL
+    Default Value: 0
+
+Object type RECORD items from taps can be transformed to flattened columns by creating columns automatically.
+
+When value is 0 (default) then flattening functionality is turned off.
+
+Configure this setting directly using the following Meltano command:
+
+meltano config target-duckdb set data_flattening_max_level [value]
+
+Database name (database)
+
+    Environment variable: TARGET_DUCKDB_DATABASE
+
+Alias of dbname.
+
+Configure this setting directly using the following Meltano command:
+
+meltano config target-duckdb set database [value]
+
+Database (dbname)
+
+    Environment variable: TARGET_DUCKDB_DBNAME
+
+The database name to write to; this will be inferred from the path property if it is not specified.
+
+Configure this setting directly using the following Meltano command:
+
+meltano config target-duckdb set dbname [value]
+
+Default Target Schema (default_target_schema)
+
+    Environment variable: TARGET_DUCKDB_DEFAULT_TARGET_SCHEMA
+    Default Value: $MELTANO_EXTRACT__LOAD_SCHEMA
+
+Name of the schema where the tables will be created. If schema_mapping is not defined then every stream sent by the tap is loaded into this schema.
+
+Configure this setting directly using the following Meltano command:
+
+meltano config target-duckdb set default_target_schema [value]
+
+Delimiter (delimiter)
+
+    Environment variable: TARGET_DUCKDB_DELIMITER
+    Default Value: ,
+
+The delimiter to use for the CSV files that are used for record imports.
+
+Configure this setting directly using the following Meltano command:
+
+meltano config target-duckdb set delimiter [value]
+
+File Path (filepath)
+
+    Environment variable: TARGET_DUCKDB_FILEPATH
+    Default Value: ${MELTANO_PROJECT_ROOT}/output/warehouse.duckdb
+
+Alias of path.
+
+Configure this setting directly using the following Meltano command:
+
+meltano config target-duckdb set filepath [value]
+
+Flush All Streams (flush_all_streams)
+
+    Environment variable: TARGET_DUCKDB_FLUSH_ALL_STREAMS
+    Default Value: false
+
+Flush and load every stream into DuckDB when one batch is full. Warning - This may trigger the COPY command to use files with low number of records.
+
+Configure this setting directly using the following Meltano command:
+
+meltano config target-duckdb set flush_all_streams [value]
+
+Hard Delete (hard_delete)
+
+    Environment variable: TARGET_DUCKDB_HARD_DELETE
+    Default Value: false
+
+When hard_delete option is true then DELETE SQL commands will be performed in DuckDB to delete rows in tables. It's achieved by continuously checking the _SDC_DELETED_AT metadata column sent by the singer tap. Due to deleting rows requires metadata columns, hard_delete option automatically enables the add_metadata_columns option as well.
+
+Configure this setting directly using the following Meltano command:
+
+meltano config target-duckdb set hard_delete [value]
+
+Connection Path (path)
+
+    Environment variable: TARGET_DUCKDB_PATH
+
+The path to use for the duckdb.connect call; either a local file or a MotherDuck connection uri.
+
+Configure this setting directly using the following Meltano command:
+
+meltano config target-duckdb set path [value]
+
+Primary Key Required (primary_key_required)
+
+    Environment variable: TARGET_DUCKDB_PRIMARY_KEY_REQUIRED
+    Default Value: true
+
+Log based and Incremental replications on tables with no Primary Key cause duplicates when merging UPDATE events. When set to true, stop loading data if no Primary Key is defined.
+
+Configure this setting directly using the following Meltano command:
+
+meltano config target-duckdb set primary_key_required [value]
+
+Quote Character (quotechar)
+
+    Environment variable: TARGET_DUCKDB_QUOTECHAR
+    Default Value: "
+
+The quote character to use for the CSV files that are used for record imports.
+
+Configure this setting directly using the following Meltano command:
+
+meltano config target-duckdb set quotechar [value]
+
+schema_mapping (schema_mapping)
+
+    Environment variable: TARGET_DUCKDB_SCHEMA_MAPPING
+
+Useful if you want to load multiple streams from one tap to multiple DuckDB schemas.
+
+If the tap sends the stream_id in - format then this option overwrites the default_target_schema value.
+
+Configure this setting directly using the following Meltano command:
+
+meltano config target-duckdb set schema_mapping [value]
+
+Temporary Directory (temp_dir)
+
+    Environment variable: TARGET_DUCKDB_TEMP_DIR
+
+Directory of temporary CSV files with RECORD messages.
+
+Configure this setting directly using the following Meltano command:
+
+meltano config target-duckdb set temp_dir [value]
+
+Token (token)
+
+    Environment variable: TARGET_DUCKDB_TOKEN
+
+For MotherDuck connections, the auth token to use.
+
+Configure this setting directly using the following Meltano command:
+
+meltano config target-duckdb set token [value]
+
+Validate Records (validate_records)
+
+    Environment variable: TARGET_DUCKDB_VALIDATE_RECORDS
+    Default Value: false
+
+Validate every single record message to the corresponding JSON schema. This option is disabled by default and invalid RECORD messages will fail only at load time by DuckDB. Enabling this option will detect invalid records earlier but could cause performance degradation.
+
+Configure this setting directly using the following Meltano command:
+
+meltano config target-duckdb set validate_records [value]

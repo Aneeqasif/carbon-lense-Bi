@@ -1,0 +1,3 @@
+consumption,unit,spend_amount,currency,emission_intensity,output_value,output_unit,_id,company_id,site_id,user_id,manager_id,frequency,year,month,emission_factor,emission_factor_unit,calculated_emission,name,notes,source,approved,approved_by,created_at,updated_at
+1000,kwh,2353,USD,,,,6946660320050340222fdb46,6908587c6cafa76c72e26c47,690859986cafa76c72e26dd8,69437f20dfa48135985a54e0,,Monthly,2025,January,0.727,TCO2e/MWH,0.727,Sam Smith,,IEA 2024,,,2025-12-20T09:01:55.936000,2025-12-20T09:01:55.936000
+1000,kwh,3454,USD,,,,694e4dd919d95da1b26e64d4,6908587c6cafa76c72e26c47,690859986cafa76c72e26dd8,69437f20dfa48135985a54e0,,Monthly,2025,February,0.727,TCO2e/MWH,0.727,Sam Smith,,IEA 2024,pending,,2025-12-26T08:56:57.476000,2025-12-26T08:56:57.476000

@@ -1,0 +1,1 @@
+shipment_id,product_type,quantity,unit,transport_mode,vehicle_type,vehicle_specification,distance,unit_of_distance,fuel_type,_id,company_id,site_id,user_id,manager_id,frequency,year,month,emission_factor,emission_factor_unit,calculated_emission,name,notes,source,approved,approved_by,created_at,updated_at
