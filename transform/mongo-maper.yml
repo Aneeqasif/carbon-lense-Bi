@@ -1,0 +1,751 @@
+plugins:
+  mappers:
+  - name: monog-mapper
+    inherit_from: meltano-map-transformer
+    variant: meltano
+    pip_url: meltano-map-transform
+    mappings:
+    - name: flatten-mongo
+      config:
+        stream_maps:
+
+            # ─────────────────────────────────────────────────────────────────────────
+            # SCOPE 1: Direct Emissions
+            # ─────────────────────────────────────────────────────────────────────────
+            # Scope 1.1 - Stationary Combustion
+          carbonLens_stationarycombustions:
+            _id: _id
+            company_id: document.get('companyId')
+            site_id: document.get('siteId')
+            user_id: document.get('userId')
+            manager_id: document.get('managerId')
+            frequency: document.get('frequency')
+            year: str(document.get('year')) if document.get('year') else None
+            month: document.get('month')
+            emission_factor: float(document.get('emissionFactor')) if document.get('emissionFactor') else None
+            emission_factor_unit: document.get('emissionFactorUnit')
+            calculated_emission: float(document.get('calculatedEmission')) if document.get('calculatedEmission') else None
+            name: document.get('name')
+            notes: document.get('notes')
+            source: document.get('source')
+            approved: document.get('approved')
+            approved_by: document.get('approvedBy')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            equipment: document.get('equipment')
+            fuel_state: document.get('fuelState')
+            fuel_type: document.get('fuelType')
+            unit: document.get('unit')
+            activity: float(document.get('activity')) if document.get('activity') else None
+            spend: float(document.get('spend')) if document.get('spend') else None
+            currency: document.get('currency')
+            document: __NULL__
+            __else__: __NULL__
+
+            # Scope 1.2 - Mobile Combustion
+          carbonLens_mobilecombustions:
+            _id: _id
+            company_id: document.get('companyId')
+            site_id: document.get('siteId')
+            user_id: document.get('userId')
+            manager_id: document.get('managerId')
+            frequency: document.get('frequency')
+            year: str(document.get('year')) if document.get('year') else None
+            month: document.get('month')
+            emission_factor: float(document.get('emissionFactor')) if document.get('emissionFactor') else None
+            emission_factor_unit: document.get('emissionFactorUnit')
+            calculated_emission: float(document.get('calculatedEmission')) if document.get('calculatedEmission') else None
+            name: document.get('name')
+            notes: document.get('notes')
+            source: document.get('source')
+            approved: document.get('approved')
+            approved_by: document.get('approvedBy')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            method: document.get('method')
+            vehicle_type: document.get('vehicleType')
+            vehicle_spec: document.get('vehicleSpec')
+            fuel_type: document.get('fuelType')
+            unit: document.get('unit')
+            activity: float(document.get('activity')) if document.get('activity') else None
+            spend: float(document.get('spend')) if document.get('spend') else None
+            currency: document.get('currency')
+            document: __NULL__
+            __else__: __NULL__
+
+            # Scope 1.3 - Fugitive Emissions (Refrigerants)
+          carbonLens_fugitiveemissions:
+            _id: _id
+            company_id: document.get('companyId')
+            site_id: document.get('siteId')
+            user_id: document.get('userId')
+            manager_id: document.get('managerId')
+            frequency: document.get('frequency')
+            year: str(document.get('year')) if document.get('year') else None
+            month: document.get('month')
+            emission_factor: float(document.get('emissionFactor')) if document.get('emissionFactor') else None
+            emission_factor_unit: document.get('emissionFactorUnit')
+            calculated_emission: float(document.get('calculatedEmission')) if document.get('calculatedEmission') else None
+            name: document.get('name')
+            notes: document.get('notes')
+            source: document.get('source')
+            approved: document.get('approved')
+            approved_by: document.get('approvedBy')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            equipment: document.get('equipment')
+            refrigerant: document.get('refrigerant')
+            units_no: int(document.get('unitsNo')) if document.get('unitsNo') else None
+            refill: float(document.get('refill')) if document.get('refill') else None
+            unit: document.get('unit')
+            spend: float(document.get('spend')) if document.get('spend') else None
+            currency: document.get('currency')
+            document: __NULL__
+            __else__: __NULL__
+
+            # Scope 1.3 - Fire Extinguishers (space in collection name!)
+          carbonLens_fire extinguishers:
+            _id: _id
+            company_id: document.get('companyId')
+            site_id: document.get('siteId')
+            user_id: document.get('userId')
+            manager_id: document.get('managerId')
+            frequency: document.get('frequency')
+            year: str(document.get('year')) if document.get('year') else None
+            month: document.get('month')
+            emission_factor: float(document.get('emissionFactor')) if document.get('emissionFactor') else None
+            emission_factor_unit: document.get('emissionFactorUnit')
+            calculated_emission: float(document.get('calculatedEmission')) if document.get('calculatedEmission') else None
+            name: document.get('name')
+            notes: document.get('notes')
+            source: document.get('source')
+            approved: document.get('approved')
+            approved_by: document.get('approvedBy')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            equipment: document.get('equipment')
+            refrigerant: document.get('refrigerant')
+            units_no: int(document.get('unitsNo')) if document.get('unitsNo') else None
+            refill: float(document.get('refill')) if document.get('refill') else None
+            unit: document.get('unit')
+            document: __NULL__
+            __else__: __NULL__
+
+            # ─────────────────────────────────────────────────────────────────────────
+            # SCOPE 2: Indirect Emissions - Energy
+            # ─────────────────────────────────────────────────────────────────────────
+            # Scope 2 - Purchased Electricity
+          carbonLens_purchasedelectricities:
+            _id: _id
+            company_id: document.get('companyId')
+            site_id: document.get('siteId')
+            user_id: document.get('userId')
+            manager_id: document.get('managerId')
+            frequency: document.get('frequency')
+            year: str(document.get('year')) if document.get('year') else None
+            month: document.get('month')
+            emission_factor: float(document.get('emissionFactor')) if document.get('emissionFactor') else None
+            emission_factor_unit: document.get('emissionFactorUnit')
+            calculated_emission: float(document.get('calculatedEmission')) if document.get('calculatedEmission') else None
+            name: document.get('name')
+            notes: document.get('notes')
+            source: document.get('source')
+            approved: document.get('approved')
+            approved_by: document.get('approvedBy')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            consumption: document.get('consumption')
+            unit: document.get('unit')
+            spend_amount: document.get('spendAmount')
+            currency: document.get('currency')
+            emission_intensity: float(document.get('emissionIntensity')) if document.get('emissionIntensity') else None
+            output_value: float(document.get('outputValue')) if document.get('outputValue') else None
+            output_unit: document.get('outputUnit')
+            document: __NULL__
+            __else__: __NULL__
+
+            # Scope 2 - Renewable Electricity
+          carbonLens_renewableelectricities:
+            _id: _id
+            company_id: document.get('companyId')
+            site_id: document.get('siteId')
+            user_id: document.get('userId')
+            manager_id: document.get('managerId')
+            frequency: document.get('frequency')
+            year: str(document.get('year')) if document.get('year') else None
+            month: document.get('month')
+            emission_factor: float(document.get('emissionFactor')) if document.get('emissionFactor') else None
+            emission_factor_unit: document.get('emissionFactorUnit')
+            calculated_emission: float(document.get('calculatedEmission')) if document.get('calculatedEmission') else None
+            name: document.get('name')
+            notes: document.get('notes')
+            source: document.get('source')
+            approved: document.get('approved')
+            approved_by: document.get('approvedBy')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            consumption: document.get('consumption')
+            unit: document.get('unit')
+            spend_amount: document.get('spendAmount')
+            currency: document.get('currency')
+            emission_intensity: float(document.get('emissionIntensity')) if document.get('emissionIntensity') else None
+            output_value: float(document.get('outputValue')) if document.get('outputValue') else None
+            output_unit: document.get('outputUnit')
+            document: __NULL__
+            __else__: __NULL__
+
+            # ─────────────────────────────────────────────────────────────────────────
+            # SCOPE 3: Other Indirect Emissions - FERA (Franchise, Leased, Investments)
+            # ─────────────────────────────────────────────────────────────────────────
+            # FERA - Stationary
+          carbonLens_ferastationaries:
+            _id: _id
+            company_id: document.get('companyId')
+            site_id: document.get('siteId')
+            user_id: document.get('userId')
+            manager_id: document.get('managerId')
+            frequency: document.get('frequency')
+            year: str(document.get('year')) if document.get('year') else None
+            month: document.get('month')
+            emission_factor: float(document.get('emissionFactor')) if document.get('emissionFactor') else None
+            emission_factor_unit: document.get('emissionFactorUnit')
+            calculated_emission: float(document.get('calculatedEmission')) if document.get('calculatedEmission') else None
+            name: document.get('name')
+            notes: document.get('notes')
+            source: document.get('source')
+            approved: document.get('approved')
+            approved_by: document.get('approvedBy')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            equipment: document.get('equipment')
+            fuel_state: document.get('fuelState')
+            fuel_type: document.get('fuelType')
+            unit: document.get('unit')
+            activity: float(document.get('activity')) if document.get('activity') else None
+            spend: float(document.get('spend')) if document.get('spend') else None
+            currency: document.get('currency')
+            document: __NULL__
+            __else__: __NULL__
+
+            # FERA - Mobile
+          carbonLens_feramobiles:
+            _id: _id
+            company_id: document.get('companyId')
+            site_id: document.get('siteId')
+            user_id: document.get('userId')
+            manager_id: document.get('managerId')
+            frequency: document.get('frequency')
+            year: str(document.get('year')) if document.get('year') else None
+            month: document.get('month')
+            emission_factor: float(document.get('emissionFactor')) if document.get('emissionFactor') else None
+            emission_factor_unit: document.get('emissionFactorUnit')
+            calculated_emission: float(document.get('calculatedEmission')) if document.get('calculatedEmission') else None
+            name: document.get('name')
+            notes: document.get('notes')
+            source: document.get('source')
+            approved: document.get('approved')
+            approved_by: document.get('approvedBy')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            method: document.get('method')
+            vehicle_type: document.get('vehicleType')
+            vehicle_spec: document.get('vehicleSpec')
+            fuel_type: document.get('fuelType')
+            unit: document.get('unit')
+            activity: float(document.get('activity')) if document.get('activity') else None
+            fuel_amount: float(document.get('fuelAmount')) if document.get('fuelAmount') else None
+            spend: float(document.get('spend')) if document.get('spend') else None
+            currency: document.get('currency')
+            document: __NULL__
+            __else__: __NULL__
+
+            # FERA - Electricity
+          carbonLens_feraelectricities:
+            _id: _id
+            company_id: document.get('companyId')
+            site_id: document.get('siteId')
+            user_id: document.get('userId')
+            manager_id: document.get('managerId')
+            frequency: document.get('frequency')
+            year: str(document.get('year')) if document.get('year') else None
+            month: document.get('month')
+            emission_factor: float(document.get('emissionFactor')) if document.get('emissionFactor') else None
+            emission_factor_unit: document.get('emissionFactorUnit')
+            calculated_emission: float(document.get('calculatedEmission')) if document.get('calculatedEmission') else None
+            name: document.get('name')
+            notes: document.get('notes')
+            source: document.get('source')
+            approved: document.get('approved')
+            approved_by: document.get('approvedBy')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            consumption: document.get('consumption')
+            unit: document.get('unit')
+            spend_amount: float(document.get('spendAmount')) if document.get('spendAmount') else None
+            currency: document.get('currency')
+            document: __NULL__
+            __else__: __NULL__
+
+            # ─────────────────────────────────────────────────────────────────────────
+            # SCOPE 3: Business Travel
+            # ─────────────────────────────────────────────────────────────────────────
+            # Scope 3.6 - Flight Travel
+          carbonLens_flighttravels:
+            _id: _id
+            company_id: document.get('companyId')
+            site_id: document.get('siteId')
+            user_id: document.get('userId')
+            manager_id: document.get('managerId')
+            frequency: document.get('frequency')
+            year: str(document.get('year')) if document.get('year') else None
+            month: document.get('month')
+            emission_factor: float(document.get('emissionFactor')) if document.get('emissionFactor') else None
+            emission_factor_unit: document.get('emissionFactorUnit')
+            calculated_emission: float(document.get('calculatedEmission')) if document.get('calculatedEmission') else None
+            name: document.get('name')
+            notes: document.get('notes')
+            source: document.get('source')
+            approved: document.get('approved')
+            approved_by: document.get('approvedBy')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            trip_id: document.get('tripID')
+            no_of_passengers: int(document.get('no_of_Passengers')) if document.get('no_of_Passengers') else None
+            departure_city: document.get('departure_City')
+            destination_city: document.get('destination_City')
+            distance: float(document.get('distance')) if document.get('distance') else None
+            unit: document.get('unit')
+            haul: document.get('haul')
+            flight_haul: document.get('flight_Haul')
+            travel_class: document.get('class')
+            travel_mode: document.get('travel_Mode')
+            user_spend: document.get('userSpend')
+            user_spend_unit: document.get('userSpendUnit')
+            document: __NULL__
+            __else__: __NULL__
+
+            # Scope 3.6 - Ground Travel
+          carbonLens_groundtravels:
+            _id: _id
+            company_id: document.get('companyId')
+            site_id: document.get('siteId')
+            user_id: document.get('userId')
+            manager_id: document.get('managerId')
+            frequency: document.get('frequency')
+            year: str(document.get('year')) if document.get('year') else None
+            month: document.get('month')
+            emission_factor: float(document.get('emissionFactor')) if document.get('emissionFactor') else None
+            emission_factor_unit: document.get('emissionFactorUnit')
+            calculated_emission: float(document.get('calculatedEmission')) if document.get('calculatedEmission') else None
+            name: document.get('name')
+            notes: document.get('notes')
+            source: document.get('source')
+            approved: document.get('approved')
+            approved_by: document.get('approvedBy')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            vehicle_type: document.get('vehicleType')
+            vehicle_specification: document.get('vehicleSpecification')
+            number_of_passengers: int(document.get('numberOfPassangers')) if document.get('numberOfPassangers') else None
+            fuel_consumption: float(document.get('fuelConsumption')) if document.get('fuelConsumption') else None
+            unit: document.get('unit')
+            total_distance_travelled: float(document.get('totalDistanceTravelled')) if document.get('totalDistanceTravelled') else None
+            unit_distance: document.get('unitDistance')
+            user_spend: document.get('userSpend')
+            user_spend_unit: document.get('userSpendUnit')
+            document: __NULL__
+            __else__: __NULL__
+
+            # Scope 3.6 - Sea Travel
+          carbonLens_seatravels:
+            _id: _id
+            company_id: document.get('companyId')
+            site_id: document.get('siteId')
+            user_id: document.get('userId')
+            manager_id: document.get('managerId')
+            frequency: document.get('frequency')
+            year: str(document.get('year')) if document.get('year') else None
+            month: document.get('month')
+            emission_factor: float(document.get('emissionFactor')) if document.get('emissionFactor') else None
+            emission_factor_unit: document.get('emissionFactorUnit')
+            calculated_emission: float(document.get('calculatedEmission')) if document.get('calculatedEmission') else None
+            name: document.get('name')
+            notes: document.get('notes')
+            source: document.get('source')
+            approved: document.get('approved')
+            approved_by: document.get('approvedBy')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            trip_id: document.get('tripID')
+            no_of_passengers: int(document.get('no_of_Passengers')) if document.get('no_of_Passengers') else None
+            departure_city: document.get('departure_City')
+            destination_city: document.get('destination_City')
+            distance: float(document.get('distance')) if document.get('distance') else None
+            unit: document.get('unit')
+            passenger_type: document.get('passangerType')
+            vehicle_type: document.get('vehicleType')
+            user_spend: document.get('userSpend')
+            user_spend_unit: document.get('userSpendUnit')
+            document: __NULL__
+            __else__: __NULL__
+
+            # Scope 3.6 - Accommodations
+          carbonLens_accomodations:
+            _id: _id
+            company_id: document.get('companyId')
+            site_id: document.get('siteId')
+            user_id: document.get('userId')
+            manager_id: document.get('managerId')
+            frequency: document.get('frequency')
+            year: str(document.get('year')) if document.get('year') else None
+            month: document.get('month')
+            emission_factor: float(document.get('emissionFactor')) if document.get('emissionFactor') else None
+            emission_factor_unit: document.get('emissionFactorUnit')
+            calculated_emission: float(document.get('calculatedEmission')) if document.get('calculatedEmission') else None
+            name: document.get('name')
+            notes: document.get('notes')
+            source: document.get('source')
+            approved: document.get('approved')
+            approved_by: document.get('approvedBy')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            hotel_type: document.get('hotelType')
+            region_of_hotel: document.get('regionOfHotel')
+            hotel_rating: int(document.get('hotelRating')) if document.get('hotelRating') else None
+            number_of_passengers: int(document.get('numberOfPassangers')) if document.get('numberOfPassangers') else None
+            number_of_nights_stayed: int(document.get('numberOfNightsStayed')) if document.get('numberOfNightsStayed') else None
+            user_spend: document.get('userSpend')
+            user_spend_unit: document.get('userSpendUnit')
+            document: __NULL__
+            __else__: __NULL__
+
+            # ─────────────────────────────────────────────────────────────────────────
+            # SCOPE 3: Employee Commuting
+            # ─────────────────────────────────────────────────────────────────────────
+            # Scope 3.7 - Employee Commuting
+          carbonLens_employeecommutings:
+            _id: _id
+            company_id: document.get('companyId')
+            site_id: document.get('siteId')
+            user_id: document.get('userId')
+            manager_id: document.get('managerId')
+            frequency: document.get('frequency')
+            year: str(document.get('year')) if document.get('year') else None
+            month: document.get('month')
+            emission_factor: float(document.get('emissionFactor')) if document.get('emissionFactor') else None
+            emission_factor_unit: document.get('emissionFactorUnit')
+            calculated_emission: float(document.get('calculatedEmission')) if document.get('calculatedEmission') else None
+            name: document.get('name')
+            notes: document.get('notes')
+            source: document.get('source')
+            approved: document.get('approved')
+            approved_by: document.get('approvedBy')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            vehicle_type: document.get('vehicleType')
+            fuel_type: document.get('fuelType')
+            number_of_employees: int(document.get('numberOfEmployees')) if document.get('numberOfEmployees') else None
+            total_number_of_vehicles: int(document.get('totalNumberOfVehicles')) if document.get('totalNumberOfVehicles') else None
+            distance: float(document.get('distance')) if document.get('distance') else None
+            number_of_working_days: int(document.get('numberOfWorkingDays')) if document.get('numberOfWorkingDays') else None
+            document: __NULL__
+            __else__: __NULL__
+
+            # ─────────────────────────────────────────────────────────────────────────
+            # SCOPE 3: Upstream Transportation & Distribution
+            # ─────────────────────────────────────────────────────────────────────────
+            # Scope 3.4 - Upstream Transportation
+          carbonLens_upstreamtransportations:
+            _id: _id
+            company_id: document.get('companyId')
+            site_id: document.get('siteId')
+            user_id: document.get('userId')
+            manager_id: document.get('managerId')
+            frequency: document.get('frequency')
+            year: str(document.get('year')) if document.get('year') else None
+            month: document.get('month')
+            emission_factor: float(document.get('emissionFactor')) if document.get('emissionFactor') else None
+            emission_factor_unit: document.get('emissionFactorUnit')
+            calculated_emission: float(document.get('calculatedEmission')) if document.get('calculatedEmission') else None
+            name: document.get('name')
+            notes: document.get('notes')
+            source: document.get('source')
+            approved: document.get('approved')
+            approved_by: document.get('approvedBy')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            shipment_id: document.get('shipmentId')
+            product_type: document.get('productType')
+            quantity: float(document.get('quantity')) if document.get('quantity') else None
+            unit: document.get('unit')
+            transport_mode: document.get('transportMode')
+            vehicle_type: document.get('vehicleType')
+            vehicle_specification: document.get('vehicleSpecification')
+            distance: float(document.get('distance')) if document.get('distance') else None
+            unit_of_distance: document.get('unitOfDistance')
+            laden: document.get('laden')
+            document: __NULL__
+            __else__: __NULL__
+
+            # Scope 3.9 - Downstream Transportation & Distribution
+          carbonLens_dtds:
+            _id: _id
+            company_id: document.get('companyId')
+            site_id: document.get('siteId')
+            user_id: document.get('userId')
+            manager_id: document.get('managerId')
+            frequency: document.get('frequency')
+            year: str(document.get('year')) if document.get('year') else None
+            month: document.get('month')
+            emission_factor: float(document.get('emissionFactor')) if document.get('emissionFactor') else None
+            emission_factor_unit: document.get('emissionFactorUnit')
+            calculated_emission: float(document.get('calculatedEmission')) if document.get('calculatedEmission') else None
+            name: document.get('name')
+            notes: document.get('notes')
+            source: document.get('source')
+            approved: document.get('approved')
+            approved_by: document.get('approvedBy')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            shipment_id: document.get('shipmentId')
+            product_type: document.get('productType')
+            quantity: document.get('quantity')
+            unit: document.get('unit')
+            transport_mode: document.get('transportMode')
+            vehicle_type: document.get('vehicleType')
+            vehicle_specification: document.get('vehicleSpecification')
+            distance: document.get('distance')
+            unit_of_distance: document.get('unitOfDistance')
+            fuel_type: document.get('fuelType')
+            document: __NULL__
+            __else__: __NULL__
+
+            # ─────────────────────────────────────────────────────────────────────────
+            # SCOPE 3: Purchased Goods & Services
+            # ─────────────────────────────────────────────────────────────────────────
+            # Scope 3.1 - Raw Materials
+          carbonLens_rawmaterials:
+            _id: _id
+            company_id: document.get('companyId')
+            site_id: document.get('siteId')
+            user_id: document.get('userId')
+            manager_id: document.get('managerId')
+            frequency: document.get('frequency')
+            year: str(document.get('year')) if document.get('year') else None
+            month: document.get('month')
+            emission_factor: float(document.get('emissionFactor')) if document.get('emissionFactor') else None
+            emission_factor_unit: document.get('emissionFactorUnit')
+            calculated_emission: float(document.get('calculatedEmission')) if document.get('calculatedEmission') else None
+            name: document.get('name')
+            notes: document.get('notes')
+            source: document.get('source')
+            approved: document.get('approved')
+            approved_by: document.get('approvedBy')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            category: document.get('category')
+            product_name: document.get('productName')
+            user_spend: float(document.get('userSpend')) if document.get('userSpend') else None
+            user_spend_unit: document.get('userSpendUnit')
+            quantity: float(document.get('quantity')) if document.get('quantity') else None
+            weight: float(document.get('weight')) if document.get('weight') else None
+            unit: document.get('unit')
+            document: __NULL__
+            __else__: __NULL__
+
+            # Scope 3.1 - Services
+          carbonLens_services:
+            _id: _id
+            company_id: document.get('companyId')
+            site_id: document.get('siteId')
+            user_id: document.get('userId')
+            manager_id: document.get('managerId')
+            frequency: document.get('frequency')
+            year: str(document.get('year')) if document.get('year') else None
+            month: document.get('month')
+            emission_factor: float(document.get('emissionFactor')) if document.get('emissionFactor') else None
+            emission_factor_unit: document.get('emissionFactorUnit')
+            calculated_emission: float(document.get('calculatedEmission')) if document.get('calculatedEmission') else None
+            name: document.get('name')
+            notes: document.get('notes')
+            source: document.get('source')
+            approved: document.get('approved')
+            approved_by: document.get('approvedBy')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            category: document.get('category')
+            product_name: document.get('productName')
+            user_spend: float(document.get('userSpend')) if document.get('userSpend') else None
+            user_spend_unit: document.get('userSpendUnit')
+            document: __NULL__
+            __else__: __NULL__
+
+            # Scope 3.1 - Packaging
+          carbonLens_packagings:
+            _id: _id
+            company_id: document.get('companyId')
+            site_id: document.get('siteId')
+            user_id: document.get('userId')
+            manager_id: document.get('managerId')
+            frequency: document.get('frequency')
+            year: str(document.get('year')) if document.get('year') else None
+            month: document.get('month')
+            emission_factor: float(document.get('emissionFactor')) if document.get('emissionFactor') else None
+            emission_factor_unit: document.get('emissionFactorUnit')
+            calculated_emission: float(document.get('calculatedEmission')) if document.get('calculatedEmission') else None
+            name: document.get('name')
+            notes: document.get('notes')
+            source: document.get('source')
+            approved: document.get('approved')
+            approved_by: document.get('approvedBy')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            category: document.get('category')
+            product_name: document.get('productName')
+            user_spend: float(document.get('userSpend')) if document.get('userSpend') else None
+            user_spend_unit: document.get('userSpendUnit')
+            quantity: float(document.get('quantity')) if document.get('quantity') else None
+            weight: float(document.get('weight')) if document.get('weight') else None
+            unit: document.get('unit')
+            document: __NULL__
+            __else__: __NULL__
+
+            # Scope 3.2 - Capital Goods
+          carbonLens_capitalgoods:
+            _id: _id
+            company_id: document.get('companyId')
+            site_id: document.get('siteId')
+            user_id: document.get('userId')
+            manager_id: document.get('managerId')
+            frequency: document.get('frequency')
+            year: str(document.get('year')) if document.get('year') else None
+            month: document.get('month')
+            emission_factor: float(document.get('emissionFactor')) if document.get('emissionFactor') else None
+            emission_factor_unit: document.get('emissionFactorUnit')
+            calculated_emission: float(document.get('calculatedEmission')) if document.get('calculatedEmission') else None
+            name: document.get('name')
+            notes: document.get('notes')
+            source: document.get('source')
+            approved: document.get('approved')
+            approved_by: document.get('approvedBy')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            category: document.get('category')
+            product_name: document.get('productName')
+            user_spend: float(document.get('userSpend')) if document.get('userSpend') else None
+            user_spend_unit: document.get('userSpendUnit')
+            quantity: float(document.get('quantity')) if document.get('quantity') else None
+            weight: float(document.get('weight')) if document.get('weight') else None
+            unit: document.get('unit')
+            production_type: document.get('productionType')
+            document: __NULL__
+            __else__: __NULL__
+
+            # ─────────────────────────────────────────────────────────────────────────
+            # SCOPE 3: Waste
+            # ─────────────────────────────────────────────────────────────────────────
+            # Scope 3.5 - Waste Generated
+          carbonLens_wastegenerations:
+            _id: _id
+            company_id: document.get('companyId')
+            site_id: document.get('siteId')
+            user_id: document.get('userId')
+            manager_id: document.get('managerId')
+            frequency: document.get('frequency')
+            year: str(document.get('year')) if document.get('year') else None
+            month: document.get('month')
+            emission_factor: float(document.get('emissionFactor')) if document.get('emissionFactor') else None
+            emission_factor_unit: document.get('emissionFactorUnit')
+            calculated_emission: float(document.get('calculatedEmission')) if document.get('calculatedEmission') else None
+            name: document.get('name')
+            notes: document.get('notes')
+            source: document.get('source')
+            approved: document.get('approved')
+            approved_by: document.get('approvedBy')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            waste_type: document.get('wasteType')
+            waste_category: document.get('wasteCategory')
+            quantity: float(document.get('quantity')) if document.get('quantity') else None
+            unit: document.get('unit')
+            disposal_method: document.get('disposalMethod')
+            document: __NULL__
+            __else__: __NULL__
+
+            # Scope 3.12 - End of Life Treatment
+          carbonLens_endoflifetreatments:
+            _id: _id
+            company_id: document.get('companyId')
+            site_id: document.get('siteId')
+            user_id: document.get('userId')
+            manager_id: document.get('managerId')
+            frequency: document.get('frequency')
+            year: str(document.get('year')) if document.get('year') else None
+            month: document.get('month')
+            emission_factor: float(document.get('emissionFactor')) if document.get('emissionFactor') else None
+            emission_factor_unit: document.get('emissionFactorUnit')
+            calculated_emission: float(document.get('calculatedEmission')) if document.get('calculatedEmission') else None
+            name: document.get('name')
+            notes: document.get('notes')
+            source: document.get('source')
+            approved: document.get('approved')
+            approved_by: document.get('approvedBy')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            waste_type: document.get('wasteType')
+            waste_category: document.get('wasteCategory')
+            quantity: document.get('quantity')
+            unit: document.get('unit')
+            disposal_method: document.get('disposalMethod')
+            document: __NULL__
+            __else__: __NULL__
+
+            # ─────────────────────────────────────────────────────────────────────────
+            # REFERENCE TABLES (Dimension Tables for BI)
+            # ─────────────────────────────────────────────────────────────────────────
+            # Companies (Dimension)
+          carbonLens_companies:
+            _id: _id
+            company_name: document.get('companyName')
+            admin_id: document.get('adminId')
+            sector_type: document.get('sectorType')
+            country: document.get('country')
+            city: document.get('city')
+            currency: document.get('currency')
+            company_logo: document.get('companyLogo')
+            baseline_year: document.get('baselineYear')
+            targets: document.get('targets')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            document: __NULL__
+            __else__: __NULL__
+
+            # Sites (Dimension)
+          carbonLens_sites:
+            _id: _id
+            site_name: document.get('siteName')
+            admin_id: document.get('adminId')
+            facility_city: document.get('facilityCity')
+            country: document.get('country')
+            sector_type: document.get('sectorType')
+            year: str(document.get('year')) if document.get('year') else None
+            year_type: document.get('yearType')
+            document: __NULL__
+            __else__: __NULL__
+
+            # Users (Dimension) - Exclude sensitive fields
+          carbonLens_users:
+            _id: _id
+            name: document.get('name')
+            email: document.get('email')
+              # password: __NULL__  # NEVER extract passwords!
+            is_admin: bool(document.get('isAdmin')) if document.get('isAdmin') is not None else None
+            role: document.get('role')
+            admin_id: document.get('admin')
+            site_id: document.get('siteID')
+            status: document.get('status')
+            created_at: document.get('createdAt')
+            updated_at: document.get('updatedAt')
+            document: __NULL__
+            __else__: __NULL__
+

@@ -5,6 +5,15 @@ include_paths:
 - ./extract/mongo-extract-mapped.yml
 - ./load/duckdb-loader.yml
 - ./load/csv-loader.yml
+- ./transform/mongo-maper.yml
 environments:
 - name: dev
 - name: prod
+
+jobs:
+- name: mongo-duckdb-mapped
+  tasks:
+  - tap-mongodb--mapped flatten-mongo target-duckdb--mapped
+- name: mongo-duckdb-jsondocs
+  tasks:
+  - tap-mongodb--jsondocs target-duckdb--jsondocs
