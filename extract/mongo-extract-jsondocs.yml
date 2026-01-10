@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/meltano/meltano/main/src/meltano/schemas/meltano.schema.json
+plugins:
+  extractors:
+  - name: tap-mongodb--jsondocs
+    inherit_from: tap-mongodb
+    variant: meltanolabs
+    pip_url: git+https://github.com/MeltanoLabs/tap-mongodb.git
+    config:
+      database: carbonLens
+      mongodb_connection_string: mongodb://admin:mongoadd99@localhost:27017/carbonLens?replicaSet=rs0&authSource=admin
+      add_record_metadata: true
+    metadata:
+      '*':
+        replication-method: ${LOAD_METHOD}

@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/meltano/meltano/main/src/meltano/schemas/meltano.schema.json
+
+plugins:
+  loaders:
+  - name: target-duckdb--mapped
+    inherit_from: target-duckdb
+    variant: jwills
+    pip_url: target-duckdb~=0.8
+    config:
+      path: ${MELTANO_PROJECT_ROOT}/output/duckdb/warehouse.duckdb
+      add_metadata_columns: true
+      hard_delete: true
+      default_target_schema: rawmp
+
+  - name: target-duckdb--jsondocs
+    inherit_from: target-duckdb
+    variant: jwills
+    pip_url: target-duckdb~=0.8
+    config:
+      path: ${MELTANO_PROJECT_ROOT}/output/duckdb/warehouse.duckdb
+      add_metadata_columns: true
+      hard_delete: true
+      default_target_schema: rawjd

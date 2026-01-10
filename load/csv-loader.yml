@@ -1,0 +1,12 @@
+plugins:
+  loaders:
+  - name: target-csv
+    variant: meltanolabs
+    pip_url: meltanolabs-target-csv
+    config:
+      output_path: ${MELTANO_PROJECT_ROOT}/output/csv
+      file_naming_scheme: '{stream_name}-{timestamp}.csv'
+      # overwrite_behavior: replace_file
+      # add_record_metadata: true
+      # Note: stream_maps already flatten, so flattening here is optional
+      # flattening_enabled: false
