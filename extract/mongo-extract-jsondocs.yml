@@ -11,5 +11,6 @@ plugins:
       mongodb_connection_string: mongodb://admin:mongoadd99@localhost:27017/carbonLens?replicaSet=rs0&authSource=admin&directConnection=true
       add_record_metadata: true
     metadata:
+      # INCREMENTAL mode - syncs all data each run, reliable for scheduled batch loads
       '*':
-        replication-method: ${LOAD_METHOD}
+        replication-method: INCREMENTAL

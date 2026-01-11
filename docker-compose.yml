@@ -10,6 +10,8 @@ services:
     command: ["--help"]
     
     environment:
+      # Use prod environment for Docker (MotherDuck cloud)
+      MELTANO_ENVIRONMENT: prod
       # MongoDB connection - uses host.docker.internal for Docker
       TAP_MONGODB__JSONDOCS_MONGODB_CONNECTION_STRING: mongodb://admin:mongoadd99@host.docker.internal:27017/carbonLens?replicaSet=rs0&authSource=admin&directConnection=true
     
@@ -17,30 +19,11 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
-  # Incremental load
-  meltano-incremental:
+  # Sync all data from MongoDB to MotherDuck
+  meltano-sync:
     extends:
       service: meltano
-    container_name: carbonlens-meltano-incremental
+    container_name: carbonlens-meltano-sync
     command: ["run", "tap-mongodb--jsondocs", "target-duckdb--jsondocs", "--force"]
     profiles:
-      - incremental
-
-  # Set CDC bookmark
-  meltano-set-bookmark:
-    extends:
-      service: meltano
-    container_name: carbonlens-meltano-bookmark
-    command: ["run", "tap-mongodb--jsondocs", "target-duckdb--jsondocs", "--full-refresh", "--force"]
-    profiles:
-      - set-bookmark
-
-  # CDC sync
-  meltano-cdc:
-    extends:
-      service: meltano
-    container_name: carbonlens-meltano-cdc
-    command: ["run", "tap-mongodb--jsondocs", "target-duckdb--jsondocs", "--force"]
-    profiles:
-      - cdc
-
+      - sync

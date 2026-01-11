@@ -6,9 +6,35 @@ include_paths:
 - ./load/duckdb-loader.yml
 - ./load/csv-loader.yml
 - ./transform/mongo-maper.yml
+
 environments:
 - name: dev
+  # Local DuckDB for development and testing
+  config:
+    plugins:
+      loaders:
+      - name: target-duckdb--jsondocs
+        config:
+          path: ${MELTANO_PROJECT_ROOT}/output/duckdb/warehouse.duckdb
+      - name: target-duckdb--mapped
+        config:
+          path: ${MELTANO_PROJECT_ROOT}/output/duckdb/warehouse.duckdb
+
 - name: prod
+  # MotherDuck cloud for production
+  config:
+    plugins:
+      loaders:
+      - name: target-duckdb--jsondocs
+        config:
+          path: md:carbonlensmd
+          token: ${MOTHERDUCK_TOKEN}
+      - name: target-duckdb--mapped
+        config:
+          path: md:carbonlensmd
+          token: ${MOTHERDUCK_TOKEN}
+  env:
+    MOTHERDUCK_TOKEN: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZWVxYXNpZmF6YWRhM0BnbWFpbC5jb20iLCJtZFJlZ2lvbiI6ImF3cy11cy1lYXN0LTEiLCJzZXNzaW9uIjoiYW5lZXFhc2lmYXphZGEzLmdtYWlsLmNvbSIsInBhdCI6ImZFcG9HVmF1b213dWFtOE04d0dJRzRSVFpjTi1rNFV1bW9lM0NFODQ2TUEiLCJ1c2VySWQiOiJmNDc0ODBhNy1lMGFkLTQ5YWMtYjhlYy1jZDYzYWYyY2YwNDMiLCJpc3MiOiJtZF9wYXQiLCJyZWFkT25seSI6ZmFsc2UsInRva2VuVHlwZSI6InJlYWRfd3JpdGUiLCJpYXQiOjE3NjgxNDI0Nzd9.JpJFTC6IaleJZ4CCwLFEjY-aXOZ7wEafxldOKma6538
 
 jobs:
 - name: mongo-duckdb-mapped
