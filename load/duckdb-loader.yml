@@ -7,7 +7,11 @@ plugins:
     variant: jwills
     pip_url: target-duckdb~=0.8
     config:
-      path: ${MELTANO_PROJECT_ROOT}/output/duckdb/warehouse.duckdb
+      # MotherDuck cloud connection
+      path: md:carbonlensmd
+      token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZWVxYXNpZmF6YWRhM0BnbWFpbC5jb20iLCJtZFJlZ2lvbiI6ImF3cy11cy1lYXN0LTEiLCJzZXNzaW9uIjoiYW5lZXFhc2lmYXphZGEzLmdtYWlsLmNvbSIsInBhdCI6ImZFcG9HVmF1b213dWFtOE04d0dJRzRSVFpjTi1rNFV1bW9lM0NFODQ2TUEiLCJ1c2VySWQiOiJmNDc0ODBhNy1lMGFkLTQ5YWMtYjhlYy1jZDYzYWYyY2YwNDMiLCJpc3MiOiJtZF9wYXQiLCJyZWFkT25seSI6ZmFsc2UsInRva2VuVHlwZSI6InJlYWRfd3JpdGUiLCJpYXQiOjE3NjgxNDI0Nzd9.JpJFTC6IaleJZ4CCwLFEjY-aXOZ7wEafxldOKma6538
+      # Local DuckDB (uncomment for local testing without cloud)
+      # path: ${MELTANO_PROJECT_ROOT}/output/duckdb/warehouse.duckdb
       add_metadata_columns: true
       hard_delete: true
       default_target_schema: rawmp
@@ -17,7 +21,12 @@ plugins:
     variant: jwills
     pip_url: target-duckdb~=0.8
     config:
-      path: ${MELTANO_PROJECT_ROOT}/output/duckdb/warehouse.duckdb
+      # MotherDuck cloud connection
+      path: md:carbonlensmd
+      token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuZWVxYXNpZmF6YWRhM0BnbWFpbC5jb20iLCJtZFJlZ2lvbiI6ImF3cy11cy1lYXN0LTEiLCJzZXNzaW9uIjoiYW5lZXFhc2lmYXphZGEzLmdtYWlsLmNvbSIsInBhdCI6ImZFcG9HVmF1b213dWFtOE04d0dJRzRSVFpjTi1rNFV1bW9lM0NFODQ2TUEiLCJ1c2VySWQiOiJmNDc0ODBhNy1lMGFkLTQ5YWMtYjhlYy1jZDYzYWYyY2YwNDMiLCJpc3MiOiJtZF9wYXQiLCJyZWFkT25seSI6ZmFsc2UsInRva2VuVHlwZSI6InJlYWRfd3JpdGUiLCJpYXQiOjE3NjgxNDI0Nzd9.JpJFTC6IaleJZ4CCwLFEjY-aXOZ7wEafxldOKma6538
+      # Local DuckDB (uncomment for local testing without cloud)
+      # path: ${MELTANO_PROJECT_ROOT}/output/duckdb/warehouse.duckdb
       add_metadata_columns: true
       hard_delete: true
       default_target_schema: rawjd
+

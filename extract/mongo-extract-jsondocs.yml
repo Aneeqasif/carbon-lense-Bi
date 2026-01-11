@@ -7,7 +7,8 @@ plugins:
     pip_url: git+https://github.com/MeltanoLabs/tap-mongodb.git
     config:
       database: carbonLens
-      mongodb_connection_string: mongodb://admin:mongoadd99@localhost:27017/carbonLens?replicaSet=rs0&authSource=admin
+      # directConnection=true is needed for Docker (bypasses replica set host discovery)
+      mongodb_connection_string: mongodb://admin:mongoadd99@localhost:27017/carbonLens?replicaSet=rs0&authSource=admin&directConnection=true
       add_record_metadata: true
     metadata:
       '*':

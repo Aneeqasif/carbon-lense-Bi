@@ -1,0 +1,43 @@
+/.git
+/.gitignore
+
+# Python virtual environment
+/venv
+__pycache__/
+*.pyc
+*.pyo
+
+# Meltano internal (will be recreated during install)
+/.meltano
+
+# Environment files (passed via docker-compose)
+/.env
+/.env.example
+/ui.cfg
+
+# Output (mounted as volume)
+/output
+
+# transform/.gitignore
+/transform/target/
+/transform/dbt_modules/
+/transform/logs/
+
+# Reference/documentation
+/reference-repos/
+/meltano-docs/
+/notebook/
+*.md
+# Keep requirements.txt but exclude other txt files
+duckdb_stationary_ids.txt
+mongo_stationary_ids.txt
+duckdbtapdocs.txt
+
+# IDE
+.vscode/
+.idea/
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore

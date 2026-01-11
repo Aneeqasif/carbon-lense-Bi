@@ -1,0 +1,46 @@
+services:
+  meltano:
+    build:
+      context: .
+      args:
+        MELTANO_IMAGE: meltano/meltano:v3.7.0-python3.11
+    image: carbonlens-meltano:latest
+    container_name: carbonlens-meltano
+    
+    command: ["--help"]
+    
+    environment:
+      # MongoDB connection - uses host.docker.internal for Docker
+      TAP_MONGODB__JSONDOCS_MONGODB_CONNECTION_STRING: mongodb://admin:mongoadd99@host.docker.internal:27017/carbonLens?replicaSet=rs0&authSource=admin&directConnection=true
+    
+    # For host.docker.internal to work on Linux
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Incremental load
+  meltano-incremental:
+    extends:
+      service: meltano
+    container_name: carbonlens-meltano-incremental
+    command: ["run", "tap-mongodb--jsondocs", "target-duckdb--jsondocs", "--force"]
+    profiles:
+      - incremental
+
+  # Set CDC bookmark
+  meltano-set-bookmark:
+    extends:
+      service: meltano
+    container_name: carbonlens-meltano-bookmark
+    command: ["run", "tap-mongodb--jsondocs", "target-duckdb--jsondocs", "--full-refresh", "--force"]
+    profiles:
+      - set-bookmark
+
+  # CDC sync
+  meltano-cdc:
+    extends:
+      service: meltano
+    container_name: carbonlens-meltano-cdc
+    command: ["run", "tap-mongodb--jsondocs", "target-duckdb--jsondocs", "--force"]
+    profiles:
+      - cdc
+
