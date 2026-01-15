@@ -1,0 +1,103 @@
+{
+  "plugin_type": "extractors",
+  "name": "tap-mongodb",
+  "namespace": "tap_mongodb",
+  "variant": "transferwise",
+  "label": "MongoDB",
+  "docs": "https://hub.meltano.com/extractors/tap-mongodb--transferwise",
+  "repo": "https://github.com/transferwise/pipelinewise-tap-mongodb",
+  "pip_url": "pipelinewise-tap-mongodb",
+  "description": "General purpose, document-based, distributed database.",
+  "logo_url": "https://hub.meltano.com/assets/logos/extractors/mongodb.png",
+  "capabilities": [
+    "catalog",
+    "discover",
+    "log-based",
+    "state"
+  ],
+  "settings_group_validation": [
+    [
+      "auth_database",
+      "database",
+      "host",
+      "password",
+      "user"
+    ]
+  ],
+  "settings": [
+    {
+      "name": "auth_database",
+      "label": "Auth Database",
+      "description": "The database name to authenticate on."
+    },
+    {
+      "name": "await_time_ms",
+      "kind": "integer",
+      "label": "Await Time Milliseconds",
+      "description": "(LOG_BASED) The maximum amount of time in milliseconds the loge_base method waits for new data changes before exiting."
+    },
+    {
+      "name": "database",
+      "label": "Database Name",
+      "description": "Database name to sync from."
+    },
+    {
+      "name": "host",
+      "label": "Host URL",
+      "description": "The MongoDB host URL."
+    },
+    {
+      "name": "include_schemas_in_destination_stream_name",
+      "kind": "string",
+      "label": "Include Schemas In Destination Stream Name",
+      "description": "Forces the stream names to take the form `<database_name>_<collection_name>` instead of `<collection_name>`. Warning - this uses a string representation of a boolean, use lowercase `true`."
+    },
+    {
+      "name": "password",
+      "kind": "string",
+      "label": "Password",
+      "description": "The MongoDB password.",
+      "sensitive": true
+    },
+    {
+      "name": "port",
+      "kind": "integer",
+      "label": "Port",
+      "description": "Connection port. Required if a non-srv connection is being used."
+    },
+    {
+      "name": "replica_set",
+      "label": "Replica Set",
+      "description": "Name of replica set"
+    },
+    {
+      "name": "srv",
+      "kind": "string",
+      "label": "SRV",
+      "description": "Uses a mongodb+srv protocol to connect. Disables the usage of port argument if set to `true`. Warning - this uses a string representation of a boolean, use lowercase `true`."
+    },
+    {
+      "name": "ssl",
+      "kind": "string",
+      "label": "SSL",
+      "description": "Can be set to true to connect using ssl. Warning - this uses a string representation of a boolean, use lowercase `true`."
+    },
+    {
+      "name": "update_buffer_size",
+      "kind": "integer",
+      "label": "Update Buffer Size",
+      "description": "(LOG_BASED) The size of the buffer that holds detected update operations in memory, the buffer is flushed once the size is reached."
+    },
+    {
+      "name": "user",
+      "label": "User",
+      "description": "The MongoDB user."
+    },
+    {
+      "name": "verify_mode",
+      "kind": "string",
+      "label": "Verify Mode",
+      "description": "Default SSL verify mode. Warning - this uses a string representation of a boolean, use lowercase `true`."
+    }
+  ]
+}

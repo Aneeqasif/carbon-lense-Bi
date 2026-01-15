@@ -5,6 +5,7 @@ include_paths:
 - ./extract/mongo-extract-mapped.yml
 - ./load/duckdb-loader.yml
 - ./load/csv-loader.yml
+- ./load/pg-loader.yml
 - ./transform/mongo-maper.yml
 
 environments:
@@ -40,20 +41,24 @@ jobs:
 - name: mongo-duckdb-mapped
   tasks:
   - tap-mongodb--mapped flatten-mongo target-duckdb--mapped
+
 - name: mongo-duckdb-jsondocs
   tasks:
   - tap-mongodb--jsondocs target-duckdb--jsondocs
+
 - name: mongo-csv--mapped
   tasks:
   - tap-mongodb--mapped flatten-mongo target-csv
 
 schedules:
-- name: hourly-load-mapped
-  interval: '@hourly'
-  job: mongo-duckdb-mapped
-- name: hourly-load-direct
-  interval: '@hourly'
-  job: mongo-duckdb-jsondocs
+# - name: hourly-load-mapped
+#   interval: '@hourly'
+#   job: mongo-duckdb-mapped
+
+- name: live-load-direct-csv
+  interval: '*/5 * * * *'
+  job: mongo-csv--mapped
+
 plugins:
   utilities:
   - name: airflow

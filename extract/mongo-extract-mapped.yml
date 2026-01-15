@@ -28,9 +28,9 @@ plugins:
     select:
       # --- Scope 1: Direct Emissions ---
     - carbonLens_stationarycombustions.*
-    - carbonlens_mobilecombustions.*
-    - carbonlens_fugitiveemissions.*
-      # - "carbonlens_fire extinguishers.*"   # note: space in name
+    - carbonLens_mobilecombustions.*
+    - carbonLens_fugitiveemissions.*
+      # - "carbonLens_fire extinguishers.*"   # note: space in name
       # --- Scope 2: Indirect Energy ---
     - carbonLens_purchasedelectricities.*
     - carbonLens_renewableelectricities.*
@@ -67,5 +67,8 @@ plugins:
     - carbonLens_companies.*
     - carbonLens_sites.*
     - carbonLens_users.*
-
-
+    - carbonLens_fuels.*
+    - carbonLens_customemissionfactors.*.*
+    - carbonLens_units.*.*
+    - carbonLens_vehicletypes.*.*
+    - carbonLens_vehiclespecifications.*.*

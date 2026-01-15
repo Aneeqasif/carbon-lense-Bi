@@ -1,0 +1,971 @@
+#+title: MongoDB → DuckDB Pipeline Demo
+#+PROPERTY: header-args:duckdb :session *duckdb-demo-local* :format duckbox :wrap example :db output/duckdb/warehouse.duckdb
+#+PROPERTY: header-args:bash :session *bash-demo* :results raw verbatim :wrap example :dir /home/aneeq/Documents/Fiver/react-dashboard/CL_site/mongo-pg
+
+* Helper blocks
+:PROPERTIES:
+:visibility: folded
+:END:
+
+Helper to truncate long outputs:
+#+NAME: head
+#+begin_src emacs-lisp :var data="" :var sep="\n" :var lines=15 :exports none
+  (cond
+   ((stringp data) (mapconcat #'identity (seq-take (split-string data "[\n]") lines) sep))
+   ((seqp data)    (seq-take data lines)))
+#+end_src
+
+#+NAME: tail
+#+begin_src emacs-lisp :var data="" :var sep="\n" :var lines=15 :exports none
+  (cond
+   ((stringp data) (let ((lst (split-string data "[\n]")))
+                     (if (<= lines 0)
+                         ""
+                       (let ((len (length lst)))
+                         (mapconcat #'identity 
+                                  (seq-drop lst (max 0 (- len lines))) 
+                                  sep)))))
+   ((seqp data)    (let ((len (length data)))
+                     (seq-drop data (max 0 (- len lines)))))
+   (t nil))
+#+end_src
+
+
+* Invoke schedular
+#+begin_src bash :session airflow-1 :async :results silent
+meltano invoke airflow scheduler
+#+end_src
+
+
+#+begin_src bash :session airflow-2 :async :results silent
+meltano invoke airflow webserver
+#+end_src
+
+* Pipeline Overview
+
+Demo for the *MongoDB → DuckDB/MotherDuck* data pipeline using Meltano.
+
+| Component | Description                         |
+|-----------+-------------------------------------|
+| Source    | MongoDB (carbonLens database)       |
+| Target    | DuckDB (local) / MotherDuck (cloud) |
+| Mode      | INCREMENTAL                         |
+
+** Two Pipeline Approaches
+
+| Pipeline    | Schema | Description                                        |
+|-------------+--------+----------------------------------------------------|
+| jsondocs    | rawjd  | Stores full JSON documents (flexible, exploratory) |
+| mapped      | rawmp  | Flattened columns (typed, analytics-ready)         |
+
+* Part 0: Running Pipelines
+
+This pipeline uses =flatten-mongo= mapper to extract fields into proper columns.
+
+** 0.0 Setup - Clear State & Fresh Sync
+
+#+begin_src bash
+exa --icons -la --group-directories-first
+#+end_src
+
+#+RESULTS:
+#+begin_example
+drwxr-xr-x    - aneeq 13 Jan 20:01  .git
+drwxr-xr-x    - aneeq 13 Jan 19:58  .meltano
+drwxr-xr-x    - aneeq  1 Jan 15:25  analyze
+drwxr-xr-x    - aneeq 12 Jan 01:39  docs
+drwxr-xr-x    - aneeq 13 Jan 01:34  extract
+drwxr-xr-x    - aneeq 13 Jan 01:34  load
+drwxr-xr-x    - aneeq 10 Jan 21:39  meltano-docs
+drwxr-xr-x    - aneeq  1 Jan 15:25  notebook
+drwxr-xr-x    - aneeq 11 Jan 15:05  orchestrate
+drwxr-xr-x    - aneeq 10 Jan 19:24  output
+drwxr-xr-x    - aneeq 11 Jan 15:01  plugins
+drwxr-xr-x    - aneeq 11 Jan 14:37  reference-repos
+drwxr-xr-x    - aneeq 12 Jan 18:29  scripts
+drwxr-xr-x    - aneeq 13 Jan 01:34  transform
+.rw-r--r--  617 aneeq 11 Jan 20:40  .dockerignore
+.rw-------  241 aneeq 11 Jan 19:00  .env
+.rw-r--r--  303 aneeq  2 Jan 23:07  .env.example
+.rw-r--r--   66 aneeq 10 Jan 19:27 󰊢 .gitignore
+.rw-r--r-- 2.6k aneeq 12 Jan 23:14  demo-prod.org
+.rw-r--r--  14k aneeq 13 Jan 19:56  demo.org
+.rw-r--r--  943 aneeq 12 Jan 01:48  docker-compose.yml
+.rw-r--r--  341 aneeq 11 Jan 20:40  Dockerfile
+.rw-r--r--  375 aneeq  4 Jan 19:05  duckdb_stationary_ids.txt
+.rw-r--r-- 7.7k aneeq  3 Jan 13:30  duckdbtapdocs.txt
+.rw-r--r--    0 aneeq 12 Jan 18:01 󰡯 fuelType
+.rw------- 2.2k aneeq 13 Jan 18:44  meltano.yml
+.rw-r--r--  27k aneeq  2 Jan 23:41  MELTANO_MIGRATION_GUIDE.md
+.rw-r--r--  400 aneeq  4 Jan 19:04  mongo_stationary_ids.txt
+.rw-r--r--   36 aneeq 12 Jan 16:38  output.txt
+.rw-r--r--  120 aneeq  2 Jan 16:47  playground-2.mongodb.js
+.rw-r--r--    0 aneeq  1 Jan 15:25 󰂺 README.md
+.rw-r--r--    0 aneeq  1 Jan 15:25  requirements.txt
+.rw-r--r-- 1.3k aneeq 10 Jan 21:42  testing.sql
+.rw-r--r--    0 aneeq 12 Jan 22:46 󰡯 year
+#+end_example
+
+#+begin_src bash
+rm output/duckdb/warehouse.duckdb
+#+end_src
+
+#+RESULTS:
+#+begin_example
+#+end_example
+
+First, clear any existing state and run a fresh sync:
+
+#+begin_src bash :async yes
+meltano state clear dev:tap-mongodb--jsondocs-to-target-duckdb--jsondocs --force 2>/dev/null
+echo "State cleared. Running fresh sync..."
+#+end_src
+
+#+RESULTS:
+#+begin_example
+State cleared. Running fresh sync...
+#+end_example
+
+** Run direc Pipeline
+
+#+begin_src bash :async yes :results silent  :post head(*this*, lines=20)
+
+meltano --environment=dev run tap-mongodb--jsondocs target-duckdb--jsondocs --force --full-refresh 
+#+end_src
+
+** 0.1 Run Mapped Pipeline
+
+#+begin_src bash :async yes :results silent
+meltano run tap-mongodb--mapped flatten-mongo target-duckdb--mapped --full-refresh
+#+end_src
+
+** 0.2 Verify Mapped Tables (pre processed)
+
+we are carefully loading only required collections here.
+
+#+begin_src duckdb 
+SELECT table_name, table_schema 
+FROM information_schema.tables 
+WHERE table_schema = 'rawmp'
+ORDER BY table_name;
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌────────────────────────────────────┬──────────────┐
+│             table_name             │ table_schema │
+│              varchar               │   varchar    │
+├────────────────────────────────────┼──────────────┤
+│ carbonlens_accomodations           │ rawmp        │
+│ carbonlens_capitalgoods            │ rawmp        │
+│ carbonlens_companies               │ rawmp        │
+│ carbonlens_customemissionfactors   │ rawmp        │
+│ carbonlens_dtds                    │ rawmp        │
+│ carbonlens_employeecommutings      │ rawmp        │
+│ carbonlens_endoflifetreatments     │ rawmp        │
+│ carbonlens_feraelectricities       │ rawmp        │
+│ carbonlens_feramobiles             │ rawmp        │
+│ carbonlens_ferastationaries        │ rawmp        │
+│ carbonlens_flighttravels           │ rawmp        │
+│ carbonlens_fuels                   │ rawmp        │
+│ carbonlens_fugitiveemissions       │ rawmp        │
+│ carbonlens_groundtravels           │ rawmp        │
+│ carbonlens_mobilecombustions       │ rawmp        │
+│ carbonlens_packagings              │ rawmp        │
+│ carbonlens_purchasedelectricities  │ rawmp        │
+│ carbonlens_rawmaterials            │ rawmp        │
+│ carbonlens_renewableelectricities  │ rawmp        │
+│ carbonlens_seatravels              │ rawmp        │
+│ carbonlens_services                │ rawmp        │
+│ carbonlens_sites                   │ rawmp        │
+│ carbonlens_stationarycombustions   │ rawmp        │
+│ carbonlens_units                   │ rawmp        │
+│ carbonlens_upstreamtransportations │ rawmp        │
+│ carbonlens_users                   │ rawmp        │
+│ carbonlens_vehiclespecifications   │ rawmp        │
+│ carbonlens_vehicletypes            │ rawmp        │
+│ carbonlens_wastegenerations        │ rawmp        │
+│ v_current_companies                │ rawmp        │
+│ v_current_purchasedelectricities   │ rawmp        │
+│ v_current_renewableelectricities   │ rawmp        │
+│ v_current_sites                    │ rawmp        │
+│ v_current_stationarycombustions    │ rawmp        │
+│ v_current_users                    │ rawmp        │
+├────────────────────────────────────┴──────────────┤
+│ 35 rows                                 2 columns │
+└───────────────────────────────────────────────────┘
+#+end_example
+
+
+
+** 1.2 Verify All Collections Loaded in jsondocs schema
+
+Check that all 40 MongoDB collections are now in DuckDB:
+
+#+begin_src duckdb 
+SELECT table_name, table_schema 
+FROM information_schema.tables 
+WHERE table_schema = 'rawjd'
+ORDER BY table_name;
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌───────────────────────────────────┬──────────────┐
+│            table_name             │ table_schema │
+│              varchar              │   varchar    │
+├───────────────────────────────────┼──────────────┤
+│ accomodations                     │ rawjd        │
+│ capitalgoods                      │ rawjd        │
+│ categories                        │ rawjd        │
+│ companies                         │ rawjd        │
+│ customemissionfactors             │ rawjd        │
+│ custommappings                    │ rawjd        │
+│ dtds                              │ rawjd        │
+│ emaillogs                         │ rawjd        │
+│ employeecommutings                │ rawjd        │
+│ endoflifetreatments               │ rawjd        │
+│ feraelectricities                 │ rawjd        │
+│ feramobiles                       │ rawjd        │
+│ ferastationaries                  │ rawjd        │
+│ fields                            │ rawjd        │
+│ fire extinguishers                │ rawjd        │
+│ flighttravels                     │ rawjd        │
+│ fuels                             │ rawjd        │
+│ fugitiveemissions                 │ rawjd        │
+│ groundtravels                     │ rawjd        │
+│ kpis                              │ rawjd        │
+│ mobilecombustions                 │ rawjd        │
+│ packagings                        │ rawjd        │
+│ products                          │ rawjd        │
+│ purchasedelectricities            │ rawjd        │
+│ rawmaterials                      │ rawjd        │
+│ renewableelectricities            │ rawjd        │
+│ seatravels                        │ rawjd        │
+│ sections                          │ rawjd        │
+│ services                          │ rawjd        │
+│ sites                             │ rawjd        │
+│ stationarycombustions             │ rawjd        │
+│ subcategories                     │ rawjd        │
+│ superadminusers                   │ rawjd        │
+│ unitesgs                          │ rawjd        │
+│ units                             │ rawjd        │
+│ upstreamtransportations           │ rawjd        │
+│ users                             │ rawjd        │
+│ v_current_accomodations           │ rawjd        │
+│ v_current_capitalgoods            │ rawjd        │
+│ v_current_companies               │ rawjd        │
+│ v_current_employeecommutings      │ rawjd        │
+│ v_current_endoflifetreatments     │ rawjd        │
+│ v_current_flighttravels           │ rawjd        │
+│ v_current_fugitiveemissions       │ rawjd        │
+│ v_current_groundtravels           │ rawjd        │
+│ v_current_mobilecombustions       │ rawjd        │
+│ v_current_purchasedelectricities  │ rawjd        │
+│ v_current_rawmaterials            │ rawjd        │
+│ v_current_renewableelectricities  │ rawjd        │
+│ v_current_seatravels              │ rawjd        │
+│ v_current_sites                   │ rawjd        │
+│ v_current_stationarycombustions   │ rawjd        │
+│ v_current_upstreamtransportations │ rawjd        │
+│ v_current_users                   │ rawjd        │
+│ v_current_wastegenerations        │ rawjd        │
+│ v_emissions_summary_by_scope      │ rawjd        │
+│ vehiclespecifications             │ rawjd        │
+│ vehicletypes                      │ rawjd        │
+│ wastegenerations                  │ rawjd        │
+├───────────────────────────────────┴──────────────┤
+│ 59 rows                                2 columns │
+└──────────────────────────────────────────────────┘
+#+end_example
+
+** 0.3 Compare Schema: JSON vs Flattened
+
+*** JSON Document Schema (rawjd) - Need JSON operators
+
+#+begin_src duckdb
+-- Requires JSON extraction operators (->>) to access fields
+SELECT column_name, data_type FROM information_schema.columns 
+WHERE table_schema = 'rawjd' AND table_name = 'stationarycombustions'
+ORDER BY ordinal_position LIMIT 5;
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌───────────────────┬───────────┐
+│    column_name    │ data_type │
+│      varchar      │  varchar  │
+├───────────────────┼───────────┤
+│ _sdc_batched_at   │ TIMESTAMP │
+│ _sdc_deleted_at   │ VARCHAR   │
+│ _sdc_extracted_at │ TIMESTAMP │
+│ cluster_time      │ TIMESTAMP │
+│ document          │ JSON      │
+└───────────────────┴───────────┘
+#+end_example
+
+*** Flattened Schema (rawmp) - Direct column access
+#+begin_src duckdb
+SELECT column_name, data_type FROM information_schema.columns 
+WHERE table_schema = 'rawmp' AND table_name = 'carbonlens_stationarycombustions'
+ORDER BY ordinal_position;
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌──────────────────────┬───────────┐
+│     column_name      │ data_type │
+│       varchar        │  varchar  │
+├──────────────────────┼───────────┤
+│ _id                  │ VARCHAR   │
+│ _sdc_batched_at      │ TIMESTAMP │
+│ _sdc_deleted_at      │ VARCHAR   │
+│ _sdc_extracted_at    │ TIMESTAMP │
+│ activity             │ DOUBLE    │
+│ approved             │ VARCHAR   │
+│ approved_by          │ VARCHAR   │
+│ calculated_emission  │ DOUBLE    │
+│ company_id           │ VARCHAR   │
+│ created_at           │ VARCHAR   │
+│ currency             │ VARCHAR   │
+│ emission_factor      │ DOUBLE    │
+│ emission_factor_unit │ VARCHAR   │
+│ equipment            │ VARCHAR   │
+│ frequency            │ VARCHAR   │
+│ fuel_state           │ VARCHAR   │
+│ fuel_type            │ VARCHAR   │
+│ manager_id           │ VARCHAR   │
+│ month                │ VARCHAR   │
+│ name                 │ VARCHAR   │
+│ notes                │ VARCHAR   │
+│ site_id              │ VARCHAR   │
+│ source               │ VARCHAR   │
+│ spend                │ DOUBLE    │
+│ unit                 │ VARCHAR   │
+│ updated_at           │ VARCHAR   │
+│ user_id              │ VARCHAR   │
+│ year                 │ VARCHAR   │
+├──────────────────────┴───────────┤
+│ 28 rows                2 columns │
+└──────────────────────────────────┘
+#+end_example
+
+** 0.4 Query Comparison: Mapped vs JSON
+
+*** Flattened (rawmp) - Clean SQL, typed columns
+#+begin_src duckdb
+SELECT fuel_type, 
+       ROUND(SUM(calculated_emission), 2) as total_emissions,
+       COUNT(*) as count
+FROM rawmp.carbonlens_stationarycombustions
+GROUP BY fuel_type
+ORDER BY count DESC
+LIMIT 5;
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌─────────────┬─────────────────┬───────┐
+│  fuel_type  │ total_emissions │ count │
+│   varchar   │     double      │ int64 │
+├─────────────┼─────────────────┼───────┤
+│ Natural Gas │       108968.61 │    92 │
+│ Diesel      │         1342.32 │    32 │
+│ LSHS        │         9059.92 │    32 │
+│ LPG         │            2.18 │    10 │
+│ Furnace Oil │         2787.81 │     7 │
+└─────────────┴─────────────────┴───────┘
+#+end_example
+
+*** JSON (rawjd) - Requires extraction operators
+#+begin_src duckdb
+SELECT document->>'fuelType' as fuel_type, 
+       ROUND(SUM((document->>'calculatedEmission')::DOUBLE), 2) as total_emissions,
+       COUNT(*) as count
+FROM rawjd.stationarycombustions
+GROUP BY document->>'fuelType'
+ORDER BY count DESC
+LIMIT 5;
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌─────────────┬─────────────────┬───────┐
+│  fuel_type  │ total_emissions │ count │
+│   varchar   │     double      │ int64 │
+├─────────────┼─────────────────┼───────┤
+│ Natural Gas │       108968.61 │    92 │
+│ LSHS        │         9059.92 │    32 │
+│ Diesel      │         1342.32 │    32 │
+│ LPG         │            2.18 │    10 │
+│ Furnace Oil │         2787.81 │     7 │
+└─────────────┴─────────────────┴───────┘
+#+end_example
+
+*** Summary:
+Basically both ingesstion methods give same final output, it just depends where we ingest the data.
+
+* Part 1: Test  ingestion.
+
+** Row Count Comparison
+
+*** MongoDB Counts
+#+begin_src bash
+mongosh "mongodb://admin:mongoadd99@localhost:27017/carbonLens?authSource=admin" --quiet --eval '
+print("users: " + db.users.countDocuments());
+print("stationarycombustions: " + db.stationarycombustions.countDocuments());
+print("sites: " + db.sites.countDocuments());
+print("companies: " + db.companies.countDocuments());
+print("mobilecombustions: " + db.mobilecombustions.countDocuments());
+print("fugitiveemissions: " + db.fugitiveemissions.countDocuments());
+'
+#+end_src
+
+#+RESULTS:
+#+begin_example
+users: 80
+stationarycombustions: 184
+sites: 12
+companies: 6
+mobilecombustions: 110
+fugitiveemissions: 91
+#+end_example
+
+*** DuckDB Counts
+#+begin_src duckdb
+      SELECT 'users' as collection, count(*) as count FROM rawjd.users
+UNION ALL
+      SELECT 'stationarycombustions', count(*) FROM rawjd.stationarycombustions
+UNION ALL
+      SELECT 'sites', count(*) FROM rawjd.sites
+UNION ALL
+      SELECT 'companies', count(*) FROM rawjd.companies
+UNION ALL
+      SELECT 'mobilecombustions', count(*) FROM rawjd.mobilecombustions
+UNION
+    ALL SELECT 'fugitiveemissions', count(*) FROM rawjd.fugitiveemissions
+ORDER BY collection;
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌───────────────────────┬───────┐
+│      collection       │ count │
+│        varchar        │ int64 │
+├───────────────────────┼───────┤
+│ companies             │     5 │
+│ fugitiveemissions     │    90 │
+│ mobilecombustions     │   109 │
+│ sites                 │    11 │
+│ stationarycombustions │   183 │
+│ users                 │    79 │
+└───────────────────────┴───────┘
+#+end_example
+
+** Data Aggregation Comparison - Emissions by Fuel Type
+
+*** MongoDB Aggregation
+
+#+begin_src bash
+mongosh "mongodb://admin:mongoadd99@localhost:27017/carbonLens?authSource=admin" \
+         --quiet --eval '
+db.stationarycombustions.aggregate([
+  {$group: {
+    _id: "$fuelType", 
+    total_emissions: {$sum: "$calculatedEmission"}, 
+    count: {$sum: 1}
+  }}, 
+  {$sort: {count: -1}}, 
+  {$limit: 5}
+])'
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[
+  {
+    _id: 'Natural Gas',
+    total_emissions: 108968.60569563325,
+    count: 92
+  },
+  { _id: 'LSHS', total_emissions: 9059.924289145, count: 32 },
+  { _id: 'Diesel', total_emissions: 1342.3180990121998, count: 32 },
+  { _id: 'LPG', total_emissions: 2.1780664639499996, count: 10 },
+  { _id: 'Furnace Oil', total_emissions: 2787.8107851, count: 7 }
+]
+#+end_example
+
+*** DuckDB SQL (Same Query)
+#+begin_src duckdb
+SELECT 
+  document->>'fuelType' as fuel_type,
+  ROUND(SUM((document->>'calculatedEmission')::DOUBLE), 2) as total_emissions,
+  COUNT(*) as count
+FROM rawjd.stationarycombustions
+GROUP BY document->>'fuelType'
+ORDER BY count DESC, total_emissions desc
+LIMIT 5;
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌─────────────┬─────────────────┬───────┐
+│  fuel_type  │ total_emissions │ count │
+│   varchar   │     double      │ int64 │
+├─────────────┼─────────────────┼───────┤
+│ Natural Gas │       108968.61 │    92 │
+│ LSHS        │         9059.92 │    32 │
+│ Diesel      │         1342.32 │    32 │
+│ LPG         │            2.18 │    10 │
+│ Furnace Oil │         2787.81 │     7 │
+└─────────────┴─────────────────┴───────┘
+#+end_example
+
+** 1.5 Users by Role Analysis
+
+*** MongoDB
+#+begin_src bash
+mongosh "mongodb://admin:mongoadd99@localhost:27017/carbonLens?authSource=admin" --quiet --eval '
+db.users.aggregate([
+  {$group: {_id: "$role", count: {$sum: 1}}},
+  {$sort: {count: -1}}
+])'
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[
+  { _id: 'user', count: 37 },
+  { _id: 'manager', count: 28 },
+  { _id: null, count: 7 },
+  { _id: 'admin', count: 6 },
+  { _id: 'superadmin', count: 1 },
+  { _id: 'consultant', count: 1 }
+]
+#+end_example
+
+*** DuckDB
+#+begin_src duckdb
+SELECT 
+  document->>'role' as role,
+  COUNT(*) as count
+FROM rawjd.users
+GROUP BY document->>'role'
+ORDER BY count DESC;
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌────────────┬───────┐
+│    role    │ count │
+│  varchar   │ int64 │
+├────────────┼───────┤
+│ user       │    37 │
+│ manager    │    28 │
+│ NULL       │     7 │
+│ admin      │     6 │
+│ consultant │     1 │
+└────────────┴───────┘
+#+end_example
+
+** 1.6 Sample Document Structure
+
+the docs are stored directly and then we use sql to get desired shape and fields:
+
+#+begin_src duckdb
+.mode line
+select json_structure(document) from rawjd.users limit 1;
+#+end_src
+
+#+RESULTS:
+#+begin_example
+json_structure("document") = {"_id":"VARCHAR","name":"VARCHAR","email":"VARCHAR","password":"VARCHAR","isAdmin":"BOOLEAN","siteAccess":["NULL"],"admin":"VARCHAR","role":"VARCHAR","allSites":["NULL"],"status":"VARCHAR","createdAt":"VARCHAR","updatedAt":"VARCHAR","__v":"UBIGINT"}
+#+end_example
+
+#+begin_src duckdb
+.mode duckbox
+
+SELECT 
+object_id,
+document->>'firstName' as first_name,
+document->>'lastName' as last_name,
+document->>'email' as email,
+document->>'role' as role
+FROM rawjd.users
+LIMIT 5;
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌──────────────────────────┬────────────┬───────────┬──────────────────────────┬─────────┐
+│        object_id         │ first_name │ last_name │          email           │  role   │
+│         varchar          │  varchar   │  varchar  │         varchar          │ varchar │
+├──────────────────────────┼────────────┼───────────┼──────────────────────────┼─────────┤
+│ 685b9a84a92ea4956a357253 │ NULL       │ NULL      │ company_demo@yopmail.com │ admin   │
+│ 685e66d8a92ea4956a357340 │ NULL       │ NULL      │ demomanager@gmail.com    │ manager │
+│ 685e66f1a92ea4956a357343 │ NULL       │ NULL      │ demouser@gmail.com       │ user    │
+│ 68637bfba92ea4956a35738f │ NULL       │ NULL      │ user@gmail.com           │ user    │
+│ 6891bb1896163182f4b27874 │ NULL       │ NULL      │ prasad@midalcable.com    │ admin   │
+└──────────────────────────┴────────────┴───────────┴──────────────────────────┴─────────┘
+#+end_example
+
+** 1.7 Total Emissions by Category (Year 2025)
+
+*** MongoDB - Total Emissions for 2025
+#+begin_src bash
+mongosh "mongodb://admin:mongoadd99@localhost:27017/carbonLens?authSource=admin" --quiet --eval '
+var stationary = db.stationarycombustions.aggregate([{$match: {year: "2025"}}, {$group: {_id: null, total: {$sum: "$calculatedEmission"}}}]).toArray()[0]?.total || 0;
+var mobile = db.mobilecombustions.aggregate([{$match: {year: "2025"}}, {$group: {_id: null, total: {$sum: "$calculatedEmission"}}}]).toArray()[0]?.total || 0;
+var fugitive = db.fugitiveemissions.aggregate([{$match: {year: "2025"}}, {$group: {_id: null, total: {$sum: "$calculatedEmission"}}}]).toArray()[0]?.total || 0;
+print("Stationary Combustion (2025): " + stationary.toFixed(2));
+print("Mobile Combustion (2025): " + mobile.toFixed(2));
+print("Fugitive Emissions (2025): " + fugitive.toFixed(2));
+print("TOTAL (2025): " + (stationary + mobile + fugitive).toFixed(2));
+'
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Stationary Combustion (2025): 62755.83
+Mobile Combustion (2025): 35313.33
+Fugitive Emissions (2025): 8657.20
+TOTAL (2025): 106726.35
+#+end_example
+
+*** DuckDB - Same Calculation (Year 2025)
+#+begin_src duckdb
+SELECT 'Stationary Combustion' as source, 
+       ROUND(SUM((document->>'calculatedEmission')::DOUBLE), 2) as total_emissions
+FROM rawjd.stationarycombustions
+WHERE document->>'year' = '2025'
+UNION ALL
+SELECT 'Mobile Combustion', 
+       ROUND(SUM((document->>'calculatedEmission')::DOUBLE), 2)
+FROM rawjd.mobilecombustions
+WHERE document->>'year' = '2025'
+UNION ALL
+SELECT 'Fugitive Emissions', 
+       ROUND(SUM((document->>'calculatedEmission')::DOUBLE), 2)
+FROM rawjd.fugitiveemissions
+WHERE document->>'year' = '2025';
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌───────────────────────┬─────────────────┐
+│        source         │ total_emissions │
+│        varchar        │     double      │
+├───────────────────────┼─────────────────┤
+│ Stationary Combustion │        62755.83 │
+│ Mobile Combustion     │        35313.33 │
+│ Fugitive Emissions    │          8657.2 │
+└───────────────────────┴─────────────────┘
+#+end_example
+
+** 1.9 Created BI-Ready Views & Analytics
+
+This section creates analytical views on top of raw data and demonstrates
+that DuckDB and MongoDB produce identical aggregation results.
+
+*** Step 1: Run view creation script
+#+begin_src duckdb :post tail(*this* , lines=57)
+
+.read scripts/01_create_all_views.sql
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌─────────────┬───────────────────────────────────┬─────────┐
+│ schema_name │             view_name             │  type   │
+│   varchar   │              varchar              │ varchar │
+├─────────────┼───────────────────────────────────┼─────────┤
+│ rawjd       │ v_current_accomodations           │ VIEW    │
+│ rawjd       │ v_current_capitalgoods            │ VIEW    │
+│ rawjd       │ v_current_companies               │ VIEW    │
+│ rawjd       │ v_current_employeecommutings      │ VIEW    │
+│ rawjd       │ v_current_endoflifetreatments     │ VIEW    │
+│ rawjd       │ v_current_flighttravels           │ VIEW    │
+│ rawjd       │ v_current_fugitiveemissions       │ VIEW    │
+│ rawjd       │ v_current_groundtravels           │ VIEW    │
+│ rawjd       │ v_current_mobilecombustions       │ VIEW    │
+│ rawjd       │ v_current_purchasedelectricities  │ VIEW    │
+│ rawjd       │ v_current_rawmaterials            │ VIEW    │
+│ rawjd       │ v_current_renewableelectricities  │ VIEW    │
+│ rawjd       │ v_current_seatravels              │ VIEW    │
+│ rawjd       │ v_current_sites                   │ VIEW    │
+│ rawjd       │ v_current_stationarycombustions   │ VIEW    │
+│ rawjd       │ v_current_upstreamtransportations │ VIEW    │
+│ rawjd       │ v_current_users                   │ VIEW    │
+│ rawjd       │ v_current_wastegenerations        │ VIEW    │
+│ rawjd       │ v_emissions_summary_by_scope      │ VIEW    │
+│ rawmp       │ v_current_companies               │ VIEW    │
+│ rawmp       │ v_current_purchasedelectricities  │ VIEW    │
+│ rawmp       │ v_current_renewableelectricities  │ VIEW    │
+│ rawmp       │ v_current_sites                   │ VIEW    │
+│ rawmp       │ v_current_stationarycombustions   │ VIEW    │
+│ rawmp       │ v_current_users                   │ VIEW    │
+├─────────────┴───────────────────────────────────┴─────────┤
+│ 25 rows                                         3 columns │
+└───────────────────────────────────────────────────────────┘
+#+end_example
+
+*** Step 2: List all created views
+
+#+begin_src duckdb
+SELECT table_name as view_name
+FROM information_schema.tables 
+WHERE table_type = 'VIEW' AND table_schema = 'rawjd'
+ORDER BY table_name;
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌───────────────────────────────────┐
+│             view_name             │
+│              varchar              │
+├───────────────────────────────────┤
+│ v_current_accomodations           │
+│ v_current_capitalgoods            │
+│ v_current_companies               │
+│ v_current_employeecommutings      │
+│ v_current_endoflifetreatments     │
+│ v_current_flighttravels           │
+│ v_current_fugitiveemissions       │
+│ v_current_groundtravels           │
+│ v_current_mobilecombustions       │
+│ v_current_purchasedelectricities  │
+│ v_current_rawmaterials            │
+│ v_current_renewableelectricities  │
+│ v_current_seatravels              │
+│ v_current_sites                   │
+│ v_current_stationarycombustions   │
+│ v_current_upstreamtransportations │
+│ v_current_users                   │
+│ v_current_wastegenerations        │
+│ v_emissions_summary_by_scope      │
+├───────────────────────────────────┤
+│              19 rows              │
+└───────────────────────────────────┘
+#+end_example
+
+*** Step 3: Emissions by Year (2025) - DuckDB vs MongoDB
+
+**** DuckDB Query
+#+begin_src duckdb
+SELECT year, 
+       ROUND(SUM(calculated_emission), 2) as total_emissions, 
+       COUNT(*) as records 
+FROM rawjd.v_current_stationarycombustions 
+WHERE year = '2025'
+GROUP BY year;
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌─────────┬─────────────────┬─────────┐
+│  year   │ total_emissions │ records │
+│ varchar │     double      │  int64  │
+├─────────┼─────────────────┼─────────┤
+│ 2025    │    62755.83     │   97    │
+└─────────┴─────────────────┴─────────┘
+#+end_example
+
+**** MongoDB Query (Same Result)
+#+begin_src bash
+mongosh "mongodb://admin:mongoadd99@localhost:27017/carbonLens?authSource=admin" --quiet --eval '
+db.stationarycombustions.aggregate([
+  {$match: {year: "2025"}}, 
+  {$group: {_id: "$year", total_emissions: {$sum: "$calculatedEmission"}, records: {$sum: 1}}}
+])'
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[ { _id: '2025', total_emissions: 62755.82858615443, records: 97 } ]
+#+end_example
+
+*** Step 4: Total Emissions by Scope - DuckDB vs MongoDB
+
+The v_emissions_summary_by_scope view filters by =approved = 'true'= and handles
+different year type formats (some collections store year as int, others as string).
+
+**** DuckDB Query
+#+begin_src duckdb
+SELECT scope, 
+       ROUND(SUM(total_emission_tco2e), 2) as total_emissions,
+       SUM(record_count) as records
+FROM rawjd.v_emissions_summary_by_scope
+where year = 2025
+GROUP BY scope
+ORDER BY scope;
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌─────────┬─────────────────┬─────────┐
+│  scope  │ total_emissions │ records │
+│ varchar │     double      │ int128  │
+├─────────┼─────────────────┼─────────┤
+│ Scope 1 │         69530.1 │     154 │
+│ Scope 2 │      2738953.01 │      76 │
+│ Scope 3 │         1224.49 │       2 │
+└─────────┴─────────────────┴─────────┘
+#+end_example
+
+**** MongoDB Query (Same Calculation)
+some mongo collections have year in different data type:
+- flighttravels has year as *INT*
+- stationarycombustions: year is *string* ("2025")
+  
+It gave me some harsh time but we are here nonetheless thanks to chatgpt :D 
+  
+#+begin_src bash
+mongosh "mongodb://admin:mongoadd99@localhost:27017/carbonLens?authSource=admin" --quiet --eval '
+// Match filter: year 2025 (as int or string) AND approved = "true"  
+var yearMatch = {$or: [{year: "2025"}, {year: 2025}]};
+var filter = {...yearMatch, approved: "true"};
+var agg = [{$match: filter}, {$group: {_id: null, t: {$sum: "$calculatedEmission"}, c: {$sum: 1}}}];
+
+// Scope 1: Stationary + Mobile + Fugitive combustion
+var s1s = db.stationarycombustions.aggregate(agg).toArray()[0] || {t: 0, c: 0};
+var s1m = db.mobilecombustions.aggregate(agg).toArray()[0] || {t: 0, c: 0};
+var s1f = db.fugitiveemissions.aggregate(agg).toArray()[0] || {t: 0, c: 0};
+
+// Scope 2: Purchased + Renewable electricity
+var s2p = db.purchasedelectricities.aggregate(agg).toArray()[0] || {t: 0, c: 0};
+var s2r = db.renewableelectricities.aggregate(agg).toArray()[0] || {t: 0, c: 0};
+
+// Scope 3: Waste + Business Travel (Flight)
+var s3w = db.wastegenerations.aggregate(agg).toArray()[0] || {t: 0, c: 0};
+var s3f = db.flighttravels.aggregate(agg).toArray()[0] || {t: 0, c: 0};
+
+print("Scope 1: " + (s1s.t + s1m.t + s1f.t).toFixed(2) + " tCO2e (" + (s1s.c + s1m.c + s1f.c) + " records)");
+print("Scope 2: " + (s2p.t + s2r.t).toFixed(2) + " tCO2e (" + (s2p.c + s2r.c) + " records)");
+print("Scope 3: " + (s3w.t + s3f.t).toFixed(2) + " tCO2e (" + (s3w.c + s3f.c) + " records)");
+'
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Scope 1: 69530.10 tCO2e (154 records)
+Scope 2: 2738953.01 tCO2e (76 records)
+Scope 3: 1224.49 tCO2e (2 records)
+#+end_example
+
+*** Step 5: Emissions by Site - DuckDB vs MongoDB
+
+**** DuckDB Query 
+#+begin_src duckdb
+SELECT s.site_name, 
+       ROUND(SUM(sc.calculated_emission), 2) as emissions, 
+       COUNT(*) as records 
+FROM rawjd.v_current_stationarycombustions sc 
+JOIN rawjd.v_current_sites s ON sc.site_id = s._id 
+GROUP BY s.site_name 
+ORDER BY site_name;
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌──────────────┬───────────┬─────────┐
+│  site_name   │ emissions │ records │
+│   varchar    │  double   │  int64  │
+├──────────────┼───────────┼─────────┤
+│ A100         │   5770.12 │      23 │
+│ Bahrain      │  80442.64 │      35 │
+│ E9           │   9173.81 │      46 │
+│ Mozambique   │  15423.67 │      34 │
+│ Mumbai       │      8.39 │       2 │
+│ Noida        │   3224.19 │      15 │
+│ Saudi Arabia │  13102.29 │      22 │
+└──────────────┴───────────┴─────────┘
+#+end_example
+
+**** MongoDB Query
+#+begin_src bash
+mongosh "mongodb://admin:mongoadd99@localhost:27017/carbonLens?authSource=admin" --quiet --eval '
+db.stationarycombustions.aggregate([
+  {$lookup: {from: "sites", localField: "siteId", foreignField: "_id", as: "site"}}, 
+  {$unwind: "$site"}, 
+  {$group: {_id: "$site.siteName", emissions: {$sum: "$calculatedEmission"}, records: {$sum: 1}}}, 
+  {$sort: {_id: 1}}
+])'
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[
+  { _id: 'A100', emissions: 5770.11976230069, records: 23 },
+  { _id: 'Bahrain', emissions: 80442.63687251855, records: 35 },
+  { _id: 'E9', emissions: 9173.8086855122, records: 46 },
+  { _id: 'Mozambique ', emissions: 15423.67385293642, records: 34 },
+  { _id: 'Mumbai', emissions: 8.3906398, records: 2 },
+  { _id: 'Noida', emissions: 3224.187901839488, records: 15 },
+  { _id: 'Saudi Arabia', emissions: 13102.294853589343, records: 22 },
+  { _id: 'demo site', emissions: 14396.639640000001, records: 6 }
+]
+#+end_example
+
+*** Step 6: Emissions by Year (All Years) - Comparison
+
+Look how easy it is now to query thanks to the views that we build in  [[file:scripts/01_create_all_views.sql][Views-script]]
+
+**** DuckDB
+#+begin_src duckdb
+SELECT year, 
+       ROUND(SUM(calculated_emission), 2) as total_emissions, 
+       COUNT(*) as records 
+FROM rawjd.v_current_stationarycombustions 
+GROUP BY year 
+ORDER BY year DESC;
+#+end_src
+
+#+RESULTS:
+#+begin_example
+┌─────────┬─────────────────┬─────────┐
+│  year   │ total_emissions │ records │
+│ varchar │     double      │  int64  │
+├─────────┼─────────────────┼─────────┤
+│ 2025    │        62755.83 │      97 │
+│ 2024    │        42399.91 │      62 │
+│ 2023    │        36386.01 │      24 │
+└─────────┴─────────────────┴─────────┘
+#+end_example
+
+**** MongoDB
+#+begin_src bash
+mongosh "mongodb://admin:mongoadd99@localhost:27017/carbonLens?authSource=admin" --quiet --eval '
+db.stationarycombustions.aggregate([
+  {$group: {_id: "$year", total_emissions: {$sum: "$calculatedEmission"}, records: {$sum: 1}}}, 
+  {$sort: {_id: -1}}
+])'
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[
+  { _id: '2025', total_emissions: 62755.82858615443, records: 97 },
+  { _id: '2024', total_emissions: 42399.913334429635, records: 62 },
+  { _id: '2023', total_emissions: 38515.39284109575, records: 25 }
+]
+#+end_example
+
+*** Step 8: Sample View Data - Sites
+#+begin_src duckdb
+SELECT _id, site_name, country, sector_type 
+FROM rawjd.v_current_sites;
+#+end_src
+
+
+* Summary
+
+- [X] all MongoDB collections synced to DuckDB
+- [X] prod ready BI analytical views.
+- [X] Data integrity verified (counts and aggregations match)
+
+* Next steps
+
+- [ ] setup Fivetran Intergration (5 mill rows is more then enough)
+- [ ] Test docker compose.
+- [ ]  Move to Evidence.

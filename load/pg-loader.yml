@@ -10,7 +10,7 @@ plugins:
       user: loader_admin
       ssl_mode: allow
       default_target_schema: rawcl
-      # For INCREMENTAL replication with upsert:
-      load_method: upsert             # Uses primary key to insert or update
+      # load_method: upsert             # Uses primary key to insert or update
+      load_method: overwrite             # Uses primary key to insert or update
       add_record_metadata: true       # Adds _sdc_extracted_at, _sdc_received_at
-      activate_version: false
+      # activate_version: false

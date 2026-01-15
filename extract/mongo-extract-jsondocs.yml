@@ -11,6 +11,47 @@ plugins:
       mongodb_connection_string: mongodb://admin:mongoadd99@localhost:27017/carbonLens?replicaSet=rs0&authSource=admin&directConnection=true
       add_record_metadata: true
     metadata:
-      # INCREMENTAL mode - syncs all data each run, reliable for scheduled batch loads
       '*':
         replication-method: INCREMENTAL
+        # replication-method: LOG_BASED
+
+
+
+  # - name: tap-mongodb--jsondocs
+  #   inherit_from: tap-mongodb
+  #   variant: transferwise
+  #   pip_url: pipelinewise-tap-mongodb
+  #   config:
+  #     auth_database: admin
+  #     database: carbonLens
+  #     host: localhost
+  #     port: 27017
+  #     replica_set: rs0
+  #     verify_mode: false
+  #     user: airbytemongo
+  #     password: mongoairbyte11
+  #   metadata:
+  #     "*":
+  #       replication-method: LOG_BASED
+  #       replication-key: _id
+
+
+  # - name: tap-mongodb--jsondocs
+  #   inherit_from: tap-mongodb
+  #   variant: z3z1ma
+  #   pip_url: git+https://github.com/celine-eu/tap-mongodb.git@fix/no_module_singerlib
+  #   config:
+  #     mongo:
+  #       host: localhost
+  #       port: 27017
+  #       directConnection: true
+  #       readPreference: secondaryPreferred
+  #       username: airbytemongo
+  #       password: mongoairbyte11
+  #       authSource: admin
+  #       tls: false
+  #     database_includes:
+  #     - carbonLens
+  #     # 'envelope' wraps entire document in a 'document' object field
+  #     strategy: envelope
+

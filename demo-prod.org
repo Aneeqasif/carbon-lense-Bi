@@ -1,0 +1,80 @@
+#+title: Demo Prod
+
+
+* Part 2: Docker + MotherDuck (Production)
+** 2.1 Build Docker Image
+
+#+begin_src bash :async yes
+
+docker compose build meltano 2>&1 | tail -5
+#+end_src
+
+** 2.2 Run Production Sync to MotherDuck
+
+#+begin_src bash :async yes
+
+docker compose --profile sync run --rm meltano-sync 2>&1 | grep -E "completed|record_count|error|METRIC" | tail -15
+#+end_src
+
+** 2.3 Verify Data in MotherDuck
+
+Connect to MotherDuck and check the data:
+
+#+begin_src bash :post head(*this*, lines=15)
+
+TOKEN=$(grep MOTHERDUCK_TOKEN meltano.yml | head -1 | awk '{print $2}')
+duckdb "md:carbonlensmd?motherduck_token=$TOKEN" -c "
+SELECT table_name, table_schema 
+FROM information_schema.tables 
+WHERE table_schema = 'rawjd'
+ORDER BY table_name;
+"
+#+end_src
+
+** 2.4 MotherDuck Row Counts
+
+#+begin_src bash
+
+TOKEN=$(grep MOTHERDUCK_TOKEN meltano.yml | head -1 | awk '{print $2}')
+duckdb "md:carbonlensmd?motherduck_token=$TOKEN" -c "
+SELECT 'users' as tbl, count(*) FROM rawjd.users
+UNION ALL SELECT 'stationarycombustions', count(*) FROM rawjd.stationarycombustions
+UNION ALL SELECT 'sites', count(*) FROM rawjd.sites
+UNION ALL SELECT 'companies', count(*) FROM rawjd.companies
+ORDER BY tbl;
+"
+#+end_src
+
+** 2.5 MotherDuck Emissions Aggregation
+
+#+begin_src bash
+
+TOKEN=$(grep MOTHERDUCK_TOKEN meltano.yml | head -1 | awk '{print $2}')
+duckdb "md:carbonlensmd?motherduck_token=$TOKEN" -c "
+SELECT 
+  document->>'fuelType' as fuel_type,
+  ROUND(SUM((document->>'calculatedEmission')::DOUBLE), 2) as total_emissions,
+  COUNT(*) as count
+FROM rawjd.stationarycombustions
+GROUP BY 1
+ORDER BY count DESC
+LIMIT 5;
+"
+#+end_src
+
+* Part 3: Quick Reference
+** Useful Commands
+
+| Action      | Command                                                                           |
+|-------------+-----------------------------------------------------------------------------------|
+| Local sync  | =meltano --environment=dev run tap-mongodb--jsondocs target-duckdb--jsondocs --force= |
+| Docker sync | =docker compose --profile sync run --rm meltano-sync=                             |
+| Clear state | =meltano state clear dev:tap-mongodb--jsondocs-to-target-duckdb--jsondocs --force=    |
+| Check state | =meltano state list=                                                              |
+
+** Environment Details
+
+| Environment | Target             | Database                        |
+|-------------+--------------------+---------------------------------|
+| dev         | Local DuckDB       | =output/duckdb/warehouse.duckdb=  |
+| prod        | MotherDuck Cloud   | =md:carbonlensmd=                 |

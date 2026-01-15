@@ -1,0 +1,5 @@
+# This file was automatically generated
+name: duckdb_cl
+type: duckdb
+options:
+  filename: local_cl_bi.db

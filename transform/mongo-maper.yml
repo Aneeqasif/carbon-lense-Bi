@@ -749,3 +749,52 @@ plugins:
             document: __NULL__
             __else__: __NULL__
 
+            # Fuels (Reference Data) - Complex nested structure for emission factors
+          carbonLens_fuels:
+            _id: _id
+            year: int(document.get('year')) if document.get('year') else None
+            scope1: str(document.get('scope1')) if document.get('scope1') else None
+            scope2: str(document.get('scope2')) if document.get('scope2') else None
+            scope3: str(document.get('scope3')) if document.get('scope3') else None
+            document: __NULL__
+            __else__: __NULL__
+
+            # Custom Emission Factors (Reference Data)
+          carbonLens_customemissionfactors:
+            _id: _id
+            document: document  # Keep full document - empty collection currently
+            __else__: __NULL__
+
+            # Units (Reference Data) - For emission units management
+          carbonLens_units:
+            _id: _id
+            name: document.get('name')
+            type: document.get('type')
+            category: document.get('category')
+            sub_category: document.get('subCategory')
+            fuel_type: "','.join(document.get('fuelType')) if document.get('fuelType') else None"
+            document: __NULL__
+            __else__: __NULL__
+
+            # Vehicle Types (Reference Data)
+          carbonLens_vehicletypes:
+            _id: _id
+            name: document.get('name')
+            description: document.get('description')
+            category: document.get('category')
+            companies: "','.join([str(c) for c in document.get('companies')]) if document.get('companies') else None"
+            document: __NULL__
+            __else__: __NULL__
+
+            # Vehicle Specifications (Reference Data)
+          carbonLens_vehiclespecifications:
+            _id: _id
+            name: document.get('name')
+            value: document.get('value')
+            unit: document.get('unit')
+            description: document.get('description')
+            vehicle_type_id: document.get('vehicleTypeId')
+            companies: "','.join([str(c) for c in document.get('companies')]) if document.get('companies') else None"
+            document: __NULL__
+            __else__: __NULL__
+
