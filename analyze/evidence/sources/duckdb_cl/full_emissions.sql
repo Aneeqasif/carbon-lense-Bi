@@ -1,0 +1,1 @@
+select * from mongo_carbonlens.v_emissions_wide;
