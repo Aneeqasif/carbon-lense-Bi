@@ -17,7 +17,7 @@ DROP VIEW IF EXISTS mongo_carbonlens.v_emissions_summary;
 -- =============================================================================
 -- MAIN WIDE VIEW: All Emissions Unified
 -- =============================================================================
-CREATE VIEW mongo_carbonlens.v_emissions_wide AS
+CREATE OR REPLACE VIEW mongo_carbonlens.v_emissions_wide AS
 WITH 
 -- -----------------------------------------------------------------------------
 -- Reference Data CTEs
@@ -1219,7 +1219,13 @@ SELECT
     
     -- Time Dimension
     e.year,
-    e.month,
+    -- Nullify invalid month values like 'Select Month'
+    CASE 
+        WHEN e.month IN ('January', 'February', 'March', 'April', 'May', 'June',
+                         'July', 'August', 'September', 'October', 'November', 'December')
+        THEN e.month
+        ELSE NULL
+    END AS month,
     -- Derive quarter from month name
     CASE 
         WHEN e.month IN ('January', 'February', 'March') THEN 1
@@ -1310,7 +1316,11 @@ SELECT
 
 FROM all_emissions e
 LEFT JOIN companies_dim c ON e.company_id = c.company_id
-LEFT JOIN sites_dim s ON e.site_id = s.site_id;
+LEFT JOIN sites_dim s ON e.site_id = s.site_id
+WHERE 
+e.approval_status = 'approved' 
+and s.site_name IS NOT NULL 
+and c.company_name NOT ILIKE '%demo%';
 
 
 -- =============================================================================

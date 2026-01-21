@@ -12,3 +12,4 @@ FROM mongo_carbonlens.v_emissions_wide
 WHERE approval_status = 'approved'
 GROUP BY site_id, site_name, site_country
 ORDER BY total_emissions DESC
+
